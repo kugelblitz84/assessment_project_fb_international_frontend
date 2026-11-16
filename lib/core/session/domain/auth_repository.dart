@@ -1,11 +1,14 @@
-import './user_entity.dart';
+import 'auth_session.dart';
+import 'user_entity.dart';
 
 abstract interface class AuthRepository {
-  Future<String?> readToken();
+  Future<AuthSession> login({required String email, required String password});
 
-  Future<void> saveToken(String token);
-
-  Future<void> clearSession();
+  Future<AuthSession> register({
+    required String name,
+    required String email,
+    required String password,
+  });
 
   Future<UserEntity> getCurrentUser({required String token});
 }
