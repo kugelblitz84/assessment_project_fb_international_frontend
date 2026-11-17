@@ -5,8 +5,9 @@ sealed class AuthState {
 }
 
 class Authenticated extends AuthState {
-  const Authenticated({required this.user});
+  const Authenticated({required this.user, this.generation = 0});
   final UserEntity user;
+  final int generation;
 }
 
 class Unauthenticated extends AuthState {

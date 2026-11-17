@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/session_controller.dart';
+import '../../../core/session/application/session_identity_provider.dart';
 import '../../shared/controller/catalog_controller.dart';
 import '../model/assistant_message_model.dart';
 import '../model/assistant_request_payload.dart';
 import '../model/assistant_state.dart';
+import '../model/assistant_recommendation.dart';
 import '../service/assistant_service.dart';
 
 final assistantControllerProvider =
@@ -16,14 +18,21 @@ class AssistantController extends Notifier<AssistantState> {
   int _generation = 0;
   @override
   AssistantState build() {
-    ref.watch(sessionProvider);
+    ref.watch(sessionIdentityProvider);
     _generation++;
     return const AssistantState();
   }
 
-  Future<void> send(String text) async {
+  bool canSend(String text) =>
+      text.trim().isNotEmpty &&
+      text.trim().length <= 2000 &&
+      !state.sending &&
+      state.failedMessageId == null;
+
+  /// Null means rejected; accepted sends update state synchronously.
+  Future<void>? send(String text) {
     final value = text.trim();
-    if (value.isEmpty || state.sending || state.failedMessageId != null) return;
+    if (!canSend(value)) return null;
     final message = AssistantMessageModel(
       id: 'user-${DateTime.now().microsecondsSinceEpoch}',
       role: AssistantRole.user,
@@ -34,7 +43,7 @@ class AssistantController extends Notifier<AssistantState> {
       sending: true,
       clearError: true,
     );
-    await _request(message.id);
+    return _request(message.id);
   }
 
   Future<void> retry() async {
@@ -52,13 +61,13 @@ class AssistantController extends Notifier<AssistantState> {
 
   Future<void> _request(String messageId) async {
     final request = _generation;
-    final session = ref.read(sessionProvider).asData?.value;
+    final identity = ref.read(sessionIdentityProvider);
     // Watch once through the shared controller so recommendations resolve to the
     // same current service models used by Explore and booking.
     await ref.read(catalogControllerProvider.future);
     if (!ref.mounted ||
         request != _generation ||
-        !identical(session, ref.read(sessionProvider).asData?.value)) {
+        identity != ref.read(sessionIdentityProvider)) {
       return;
     }
     final result = await ApiErrorHandler.run(
@@ -68,7 +77,7 @@ class AssistantController extends Notifier<AssistantState> {
     );
     if (!ref.mounted ||
         request != _generation ||
-        !identical(session, ref.read(sessionProvider).asData?.value)) {
+        identity != ref.read(sessionIdentityProvider)) {
       return;
     }
     if (!result.success) {
@@ -79,21 +88,11 @@ class AssistantController extends Notifier<AssistantState> {
       );
       return;
     }
-    final catalog =
-        ref.read(catalogControllerProvider).asData?.value.services ?? const [];
     final response = result.data!;
-    final valid = response.actions
-        .where(
-          (action) => switch (action.type) {
-            AssistantActionType.serviceDetails =>
-              action.serviceId != null &&
-                  catalog.any((s) => s.id == action.serviceId),
-            AssistantActionType.browseServices =>
-              action.categoryId == null ||
-                  catalog.any((s) => s.categoryId == action.categoryId),
-          },
-        )
-        .toList(growable: false);
+    final valid = resolveRecommendations(
+      response.actions,
+      ref.read(catalogByIdProvider),
+    ).map((recommendation) => recommendation.action).toList(growable: false);
     final safeMessage = AssistantMessageModel(
       id: response.id,
       role: AssistantRole.assistant,
@@ -107,3 +106,15 @@ class AssistantController extends Notifier<AssistantState> {
     );
   }
 }
+
+final assistantRecommendationsProvider =
+    Provider<Map<String, List<AssistantRecommendation>>>((ref) {
+      final messages = ref.watch(
+        assistantControllerProvider.select((state) => state.messages),
+      );
+      final catalog = ref.watch(catalogByIdProvider);
+      return Map.unmodifiable({
+        for (final message in messages)
+          message.id: resolveRecommendations(message.actions, catalog),
+      });
+    });

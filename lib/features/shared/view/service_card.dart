@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/service_image.dart';
@@ -22,63 +24,63 @@ class ServiceCard extends StatelessWidget {
         children: [
           ServiceImage(url: service.imageUrl, label: service.name),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: AppSize.inset(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   service.categoryName.toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: AppColors.primary,
-                    fontSize: 11,
+                    fontSize: AppSize.font(11),
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSize.vertical(8)),
                 Text(
                   service.name,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSize.vertical(8)),
                 Text(
                   service.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(color: AppColors.secondary),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSize.vertical(16)),
                 Wrap(
                   spacing: 5,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.schedule_outlined,
-                      size: 16,
+                      size: AppSize.icon(16),
                       color: AppColors.secondary,
                     ),
                     Text(
                       Formatters.duration(service.durationMinutes),
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: AppColors.secondary,
-                        fontSize: 12,
+                        fontSize: AppSize.font(12),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: AppSize.vertical(8)),
                 Text(
                   Formatters.price(service.price, service.currency),
-                  style: const TextStyle(
-                    fontSize: 22,
+                  style: TextStyle(
+                    fontSize: AppSize.font(22),
                     fontWeight: FontWeight.w700,
                     color: AppColors.navy,
                   ),
                 ),
-                const SizedBox(height: 8),
-                const Wrap(
+                SizedBox(height: AppSize.vertical(8)),
+                Wrap(
                   spacing: 6,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
@@ -91,7 +93,7 @@ class ServiceCard extends StatelessWidget {
                     ),
                     Icon(
                       Icons.arrow_forward_rounded,
-                      size: 18,
+                      size: AppSize.icon(18),
                       color: AppColors.primary,
                     ),
                   ],
@@ -105,28 +107,40 @@ class ServiceCard extends StatelessWidget {
   );
 }
 
-class ServiceGrid extends StatelessWidget {
-  const ServiceGrid({super.key, required this.services});
+/// Lazy rows retain variable card heights for large text without nested scrolling.
+class SliverServiceGrid extends StatelessWidget {
+  const SliverServiceGrid({super.key, required this.services});
   final List<ServiceModel> services;
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
+  Widget build(BuildContext context) => SliverLayoutBuilder(
     builder: (context, constraints) {
       final largeText = MediaQuery.textScalerOf(context).scale(16) > 21;
-      final minWidth = constraints.maxWidth < 600 ? 156.0 : 250.0;
+      final width = constraints.crossAxisExtent;
+      final minWidth = width < 600 ? 156.0 : 250.0;
       final columns = largeText
-          ? (constraints.maxWidth >= 820 ? 2 : 1)
-          : ((constraints.maxWidth + 16) / (minWidth + 16)).floor().clamp(1, 4);
-      final width = (constraints.maxWidth - (columns - 1) * 16) / columns;
-      return Wrap(
-        spacing: 16,
-        runSpacing: 16,
-        children: [
-          for (final s in services)
-            SizedBox(
-              width: width,
-              child: ServiceCard(service: s),
-            ),
-        ],
+          ? (width >= 820 ? 2 : 1)
+          : ((width + 16) / (minWidth + 16)).floor().clamp(1, 4);
+      return SliverList.builder(
+        itemCount: (services.length / columns).ceil(),
+        itemBuilder: (context, row) => Padding(
+          padding: EdgeInsets.only(bottom: AppSize.vertical(16)),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var column = 0; column < columns; column++) ...[
+                if (column > 0) SizedBox(width: AppSize.horizontal(16)),
+                Expanded(
+                  child: row * columns + column < services.length
+                      ? ServiceCard(
+                          key: ValueKey(services[row * columns + column].id),
+                          service: services[row * columns + column],
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ],
+          ),
+        ),
       );
     },
   );

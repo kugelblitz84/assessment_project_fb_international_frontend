@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../model/appointment_model.dart';
@@ -15,13 +17,13 @@ class DetailLine extends StatelessWidget {
   final IconData? icon;
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 10),
+    padding: EdgeInsets.symmetric(vertical: AppSize.vertical(10)),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (icon != null) ...[
-          Icon(icon, size: 21, color: AppColors.secondary),
-          const SizedBox(width: 12),
+          Icon(icon, size: AppSize.icon(21), color: AppColors.secondary),
+          SizedBox(width: AppSize.horizontal(12)),
         ],
         Expanded(
           child: Column(
@@ -29,12 +31,12 @@ class DetailLine extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.secondary,
-                  fontSize: 13,
+                  fontSize: AppSize.font(13),
                 ),
               ),
-              const SizedBox(height: 3),
+              SizedBox(height: AppSize.vertical(3)),
               SelectableText(
                 value,
                 style: const TextStyle(fontWeight: FontWeight.w600),

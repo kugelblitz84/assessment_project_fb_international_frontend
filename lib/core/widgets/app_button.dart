@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_spacing.dart';
+
 class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
@@ -27,7 +29,7 @@ class AppButton extends StatelessWidget {
             height: 18,
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
-        if (!loading && icon != null) Icon(icon, size: 20),
+        if (!loading && icon != null) Icon(icon, size: AppSize.icon(20)),
         Text(label, textAlign: TextAlign.center),
       ],
     ),

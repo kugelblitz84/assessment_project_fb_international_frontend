@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_error_handler.dart';
 import '../../../core/session/application/session_controller.dart';
+import '../../../core/session/application/session_identity_provider.dart';
 import '../../../core/session/domain/auth_state.dart';
 import '../../shared/controller/appointments_controller.dart';
 import '../../shared/model/create_booking_payload.dart';
@@ -16,11 +17,15 @@ class BookingController extends AsyncNotifier<BookingState> {
   BookingController(this.serviceId);
   final String serviceId;
   int _request = 0;
+  DateTime get firstBookableDate => ref.read(bookingServiceProvider).today;
+  DateTime get lastBookableDate =>
+      firstBookableDate.add(const Duration(days: 365));
 
   @override
   Future<BookingState> build() async {
     _request++;
-    final session = ref.watch(sessionProvider).asData?.value;
+    ref.watch(sessionIdentityProvider);
+    final session = ref.read(sessionProvider).asData?.value;
     final service = ref.watch(bookingServiceProvider);
     final date = service.today;
     if (session is! Authenticated) {
@@ -36,7 +41,15 @@ class BookingController extends AsyncNotifier<BookingState> {
     );
   }
 
-  Future<void> selectDate(DateTime date) async {
+  Future<void> selectDate(DateTime date) => _loadAvailability(
+    date,
+    preserveSelection: state.asData?.value.date == date,
+  );
+
+  Future<void> _loadAvailability(
+    DateTime date, {
+    required bool preserveSelection,
+  }) async {
     final current = state.asData?.value;
     if (current == null ||
         current.submitting ||
@@ -44,28 +57,51 @@ class BookingController extends AsyncNotifier<BookingState> {
         current.created != null) {
       return;
     }
+    if (current.loadingSlots && current.date == date) return;
+    final identity = ref.read(sessionIdentityProvider);
     final request = ++_request;
     state = AsyncData(
       current.copyWith(
         date: date,
-        clearSlot: true,
-        clearAvailability: true,
+        clearSlot: !preserveSelection,
+        clearAvailability: !preserveSelection,
         loadingSlots: true,
-        step: 0,
+        step: preserveSelection ? current.step : BookingStep.schedule,
         clearAvailabilityError: true,
       ),
     );
     final result = await ApiErrorHandler.run(
       () => ref.read(bookingServiceProvider).getAvailability(serviceId, date),
     );
-    if (!ref.mounted || request != _request) return;
+    if (!ref.mounted ||
+        request != _request ||
+        identity != ref.read(sessionIdentityProvider)) {
+      return;
+    }
+    final validSelection =
+        result.data?.slots.any(
+          (slot) => slot.id == current.slotId && slot.available,
+        ) ==
+        true;
     state = AsyncData(
       state.requireValue.copyWith(
         availability: result.data,
+        clearSlot: result.success && !validSelection,
+        step: result.success && !validSelection ? BookingStep.schedule : null,
         loadingSlots: false,
         availabilityError: result.errorCode,
         clearAvailabilityError: result.success,
       ),
+    );
+  }
+
+  Future<void> refreshAvailability() async {
+    final current = state.asData?.value;
+    if (current == null || current.loadingSlots) return;
+    final today = ref.read(bookingServiceProvider).today;
+    await _loadAvailability(
+      current.date.isBefore(today) ? today : current.date,
+      preserveSelection: !current.date.isBefore(today),
     );
   }
 
@@ -87,23 +123,26 @@ class BookingController extends AsyncNotifier<BookingState> {
   void review() {
     final current = state.asData?.value;
     if (current?.canContinue == true) {
-      state = AsyncData(current!.copyWith(step: 1, clearError: true));
+      state = AsyncData(
+        current!.copyWith(step: BookingStep.review, clearError: true),
+      );
     }
   }
 
   void edit() {
     final current = state.asData?.value;
     if (current != null && !current.submitting && !current.uncertain) {
-      state = AsyncData(current.copyWith(step: 0));
+      state = AsyncData(current.copyWith(step: BookingStep.schedule));
     }
   }
 
   Future<void> submit() async {
     final current = state.asData?.value;
+    final identity = ref.read(sessionIdentityProvider);
     final session = ref.read(sessionProvider).asData?.value;
     if (current == null ||
         !current.canContinue ||
-        current.step != 1 ||
+        current.step != BookingStep.review ||
         current.created != null ||
         session is! Authenticated) {
       return;
@@ -120,7 +159,7 @@ class BookingController extends AsyncNotifier<BookingState> {
     );
     if (!ref.mounted ||
         request != _request ||
-        !identical(session, ref.read(sessionProvider).asData?.value)) {
+        identity != ref.read(sessionIdentityProvider)) {
       return;
     }
     if (result.success) {
@@ -147,7 +186,7 @@ class BookingController extends AsyncNotifier<BookingState> {
     );
     if (result.errorCode == 'CONFLICT') {
       // Generic conflicts do not claim a particular backend domain error.
-      await selectDate(current.date);
+      await _loadAvailability(current.date, preserveSelection: false);
     }
   }
 }

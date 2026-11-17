@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
@@ -128,7 +129,7 @@ void main() {
         tester.view.physicalSize = Size(width, 900);
         await tester.pumpAndSettle();
         expect(container.read(provider).requireValue.slotId, slot.id);
-        expect(container.read(provider).requireValue.step, 1);
+        expect(container.read(provider).requireValue.step, BookingStep.review);
         expect(tester.takeException(), isNull);
       }
       router.go('/profile/edit');

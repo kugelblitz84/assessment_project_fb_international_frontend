@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/navigation/presentation/adaptive_app_shell.dart';
+
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/session/application/current_user_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/async_state_view.dart';
@@ -19,7 +21,7 @@ class BookingConfirmationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(appointmentDetailsProvider(bookingId));
     final user = ref.watch(currentUserProvider);
-    return AdaptiveAppShell(
+    return AppPageScaffold(
       title: 'Booking acknowledgement',
       body: SingleChildScrollView(
         child: PageContainer(
@@ -51,14 +53,14 @@ class BookingConfirmationPage extends ConsumerWidget {
               };
               return Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: AppSize.cardPadding,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSize.vertical(8)),
                       Center(
                         child: Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: AppSize.inset(20),
                           decoration: BoxDecoration(
                             color: confirmed
                                 ? AppColors.successSoft
@@ -69,20 +71,20 @@ class BookingConfirmationPage extends ConsumerWidget {
                             confirmed
                                 ? Icons.check_circle_outline
                                 : Icons.event_available_outlined,
-                            size: 44,
+                            size: AppSize.icon(44),
                             color: confirmed
                                 ? AppColors.success
                                 : AppColors.primary,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSize.vertical(24)),
                       Text(
                         headline,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.headlineMedium,
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: AppSize.vertical(12)),
                       Text(
                         booking.status == BookingStatus.pending
                             ? 'Your request is saved. Check My Bookings for its current status.'
@@ -90,17 +92,17 @@ class BookingConfirmationPage extends ConsumerWidget {
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: AppColors.secondary),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: AppSize.vertical(20)),
                       Center(child: BookingStatusBadge(status: booking.status)),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSize.vertical(24)),
                       const Divider(),
                       AppointmentInfo(appointment: booking),
-                      const SizedBox(height: 24),
+                      SizedBox(height: AppSize.vertical(24)),
                       FilledButton(
                         onPressed: () => context.goNamed(AppRoutes.myBookings),
                         child: const Text('View my bookings'),
                       ),
-                      const SizedBox(height: 8),
+                      SizedBox(height: AppSize.vertical(8)),
                       TextButton(
                         onPressed: () => context.goNamed(AppRoutes.home),
                         child: const Text('Back to Explore'),

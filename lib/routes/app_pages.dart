@@ -1,6 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/presentation/not_found_page.dart';
+import '../core/session/application/session_identity_provider.dart';
+import '../core/navigation/presentation/main_navigation_shell.dart';
+import '../core/navigation/presentation/navigation_shell_scope.dart';
 import '../features/assistant/view/ai_assistant_page.dart';
 import '../features/auth/view/login_page.dart';
 import '../features/auth/view/register_page.dart';
@@ -14,72 +18,136 @@ import '../features/profile/view/profile_page.dart';
 import '../features/services/view/service_details_page.dart';
 import 'app_routes.dart';
 
-final appPages = <RouteBase>[
-  GoRoute(
-    name: AppRoutes.login,
-    path: AppRoutes.loginPath,
-    builder: (context, state) => const LoginPage(),
-  ),
-  GoRoute(
-    name: AppRoutes.register,
-    path: AppRoutes.registerPath,
-    builder: (context, state) => const RegisterPage(),
-  ),
-  GoRoute(
-    name: AppRoutes.home,
-    path: AppRoutes.homePath,
-    builder: (context, state) => HomePage(
-      categoryId: state.uri.queryParameters['category'],
-      resetFilters: state.uri.queryParameters['browse'] == 'all',
+/// New shell/branch keys discard mounted private state on ownership changes.
+List<RouteBase> createAppPages(
+  GlobalKey<NavigatorState> rootNavigatorKey,
+  SessionIdentity identity,
+) {
+  final shellKey = GlobalKey<StatefulNavigationShellState>(
+    debugLabel: 'main-shell',
+  );
+  Widget rootScreen(Widget child) =>
+      NavigationShellScope(shellKey: shellKey, child: child);
+  return [
+    GoRoute(
+      name: AppRoutes.login,
+      path: AppRoutes.loginPath,
+      builder: (_, _) => const LoginPage(),
     ),
-  ),
-  GoRoute(
-    name: AppRoutes.serviceDetails,
-    path: AppRoutes.serviceDetailsPath,
-    builder: (context, state) =>
+    GoRoute(
+      name: AppRoutes.register,
+      path: AppRoutes.registerPath,
+      builder: (_, _) => const RegisterPage(),
+    ),
+    GoRoute(
+      name: AppRoutes.serviceDetails,
+      path: AppRoutes.serviceDetailsPath,
+      parentNavigatorKey: rootNavigatorKey,
+      builder: (_, state) => rootScreen(
         ServiceDetailsPage(serviceId: state.pathParameters['serviceId']!),
-  ),
-  GoRoute(
-    name: AppRoutes.booking,
-    path: AppRoutes.bookingPath,
-    builder: (context, state) =>
-        BookingPage(serviceId: state.pathParameters['serviceId']!),
-  ),
-  GoRoute(
-    name: AppRoutes.bookingConfirmation,
-    path: AppRoutes.bookingConfirmationPath,
-    builder: (context, state) =>
-        BookingConfirmationPage(bookingId: state.pathParameters['bookingId']!),
-  ),
-  GoRoute(
-    name: AppRoutes.myBookings,
-    path: AppRoutes.myBookingsPath,
-    builder: (context, state) => const MyBookingsPage(),
-  ),
-  GoRoute(
-    name: AppRoutes.bookingDetails,
-    path: AppRoutes.bookingDetailsPath,
-    builder: (context, state) =>
-        BookingDetailsPage(bookingId: state.pathParameters['bookingId']!),
-  ),
-  GoRoute(
-    name: AppRoutes.profile,
-    path: AppRoutes.profilePath,
-    builder: (context, state) => const ProfilePage(),
-  ),
-  GoRoute(
-    name: AppRoutes.editProfile,
-    path: AppRoutes.editProfilePath,
-    builder: (context, state) => const EditProfilePage(),
-  ),
-  GoRoute(
-    name: AppRoutes.assistant,
-    path: AppRoutes.assistantPath,
-    builder: (context, state) => const AiAssistantPage(),
-  ),
-  GoRoute(
-    name: AppRoutes.notFound,
-    path: AppRoutes.notFoundPath,
-    builder: (context, state) => const NotFoundPage(),
-  ),
-];
+      ),
+      routes: [
+        GoRoute(
+          name: AppRoutes.booking,
+          path: 'book',
+          parentNavigatorKey: rootNavigatorKey,
+          builder: (_, state) => rootScreen(
+            BookingPage(
+              key: ValueKey(identity),
+              serviceId: state.pathParameters['serviceId']!,
+            ),
+          ),
+        ),
+      ],
+    ),
+    StatefulShellRoute.indexedStack(
+      key: shellKey,
+      builder: (context, state, shell) => MainNavigationShell(
+        navigationShell: shell,
+        showNavigation: const [
+          AppRoutes.homePath,
+          AppRoutes.myBookingsPath,
+          AppRoutes.assistantPath,
+          AppRoutes.profilePath,
+        ].contains(state.uri.path),
+      ),
+      branches: [
+        StatefulShellBranch(
+          preload: false,
+          routes: [
+            GoRoute(
+              name: AppRoutes.home,
+              path: AppRoutes.homePath,
+              builder: (_, state) => HomePage(
+                categoryId: state.uri.queryParameters['category'],
+                resetFilters: state.uri.queryParameters['browse'] == 'all',
+              ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          preload: false,
+          routes: [
+            GoRoute(
+              name: AppRoutes.myBookings,
+              path: AppRoutes.myBookingsPath,
+              builder: (_, _) => const MyBookingsPage(),
+              routes: [
+                GoRoute(
+                  name: AppRoutes.bookingDetails,
+                  path: ':bookingId',
+                  builder: (_, state) => BookingDetailsPage(
+                    key: ValueKey(identity),
+                    bookingId: state.pathParameters['bookingId']!,
+                  ),
+                  routes: [
+                    GoRoute(
+                      name: AppRoutes.bookingConfirmation,
+                      path: 'confirmation',
+                      builder: (_, state) => BookingConfirmationPage(
+                        key: ValueKey(identity),
+                        bookingId: state.pathParameters['bookingId']!,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          preload: false,
+          routes: [
+            GoRoute(
+              name: AppRoutes.assistant,
+              path: AppRoutes.assistantPath,
+              builder: (_, _) => const AiAssistantPage(),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          preload: false,
+          routes: [
+            GoRoute(
+              name: AppRoutes.profile,
+              path: AppRoutes.profilePath,
+              builder: (_, _) => const ProfilePage(),
+              routes: [
+                GoRoute(
+                  name: AppRoutes.editProfile,
+                  path: 'edit',
+                  builder: (_, _) => EditProfilePage(key: ValueKey(identity)),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    ),
+    GoRoute(
+      name: AppRoutes.notFound,
+      path: AppRoutes.notFoundPath,
+      builder: (_, _) => const NotFoundPage(),
+    ),
+  ];
+}

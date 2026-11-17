@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'dart:async';
 import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
@@ -122,7 +123,7 @@ void main() {
       await controller.submit();
       final state = container.read(provider).requireValue;
       expect(state.created, isNull);
-      expect(state.step, 0);
+      expect(state.step, BookingStep.schedule);
       expect(state.slotId, isNull);
       expect(state.errorCode, 'CONFLICT');
       expect(

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/navigation/presentation/adaptive_app_shell.dart';
+
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/network/api_error_handler.dart';
 import '../../../core/session/application/current_user_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -51,7 +53,7 @@ class BookingDetailsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(appointmentDetailsProvider(bookingId));
     final user = ref.watch(currentUserProvider);
-    return AdaptiveAppShell(
+    return AppPageScaffold(
       title: 'Booking details',
       body: SingleChildScrollView(
         child: PageContainer(
@@ -81,10 +83,10 @@ class BookingDetailsPage extends ConsumerWidget {
                     'Appointment details',
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: AppSize.vertical(20)),
                   Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: AppSize.cardPadding,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -101,11 +103,11 @@ class BookingDetailsPage extends ConsumerWidget {
                               BookingStatusBadge(status: booking.status),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          SizedBox(height: AppSize.vertical(24)),
                           const Divider(),
                           AppointmentInfo(appointment: booking),
                           if (data.errorCode != null) ...[
-                            const SizedBox(height: 16),
+                            SizedBox(height: AppSize.vertical(16)),
                             InlineNotice(
                               message: ApiErrorHandler.messageFor(
                                 data.errorCode,
@@ -114,12 +116,12 @@ class BookingDetailsPage extends ConsumerWidget {
                             ),
                           ],
                           if (booking.canCancel) ...[
-                            const SizedBox(height: 20),
+                            SizedBox(height: AppSize.vertical(20)),
                             const Text(
                               'Pending requests can be cancelled here.',
                               style: TextStyle(color: AppColors.secondary),
                             ),
-                            const SizedBox(height: 12),
+                            SizedBox(height: AppSize.vertical(12)),
                             OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: AppColors.error,
@@ -144,7 +146,7 @@ class BookingDetailsPage extends ConsumerWidget {
                               ),
                             ),
                           ],
-                          const SizedBox(height: 12),
+                          SizedBox(height: AppSize.vertical(12)),
                           TextButton.icon(
                             onPressed: data.busy
                                 ? null
@@ -158,7 +160,7 @@ class BookingDetailsPage extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: AppSize.vertical(16)),
                   TextButton(
                     onPressed: () => context.goNamed(AppRoutes.myBookings),
                     child: const Text('Back to My Bookings'),

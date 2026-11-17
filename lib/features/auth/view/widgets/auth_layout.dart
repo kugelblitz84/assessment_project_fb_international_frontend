@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/navigation/presentation/adaptive_app_shell.dart';
+
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/navigation/presentation/auto_care_brand.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_routes.dart';
 
@@ -21,17 +23,17 @@ class AuthLayout extends StatelessWidget {
     body: SafeArea(
       child: Center(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: AppSize.inset(20),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 440),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Center(child: AutoCareBrand()),
-                const SizedBox(height: 32),
+                SizedBox(height: AppSize.vertical(32)),
                 Card(
                   child: Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: AppSize.cardPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -39,23 +41,23 @@ class AuthLayout extends StatelessWidget {
                           title,
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSize.vertical(8)),
                         Text(
                           subtitle,
                           style: const TextStyle(color: AppColors.secondary),
                         ),
-                        const SizedBox(height: 28),
+                        SizedBox(height: AppSize.vertical(28)),
                         child,
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: AppSize.vertical(12)),
                 TextButton.icon(
                   onPressed: busy
                       ? null
                       : () => context.goNamed(AppRoutes.home),
-                  icon: const Icon(Icons.arrow_back, size: 18),
+                  icon: Icon(Icons.arrow_back, size: AppSize.icon(18)),
                   label: const Text('Continue browsing'),
                 ),
               ],

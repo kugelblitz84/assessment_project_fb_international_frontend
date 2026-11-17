@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_spacing.dart';
 import '../theme/app_colors.dart';
 
 class ServiceImage extends StatelessWidget {
@@ -22,7 +24,11 @@ class ServiceImage extends StatelessWidget {
         ),
       ),
       alignment: Alignment.center,
-      child: Icon(icon, size: 64, color: AppColors.navy.withValues(alpha: .6)),
+      child: Icon(
+        icon,
+        size: AppSize.icon(64),
+        color: AppColors.navy.withValues(alpha: .6),
+      ),
     );
     return Semantics(
       label: label,

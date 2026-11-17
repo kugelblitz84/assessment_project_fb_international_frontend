@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../model/appointment_model.dart';
 
@@ -37,21 +39,24 @@ class BookingStatusBadge extends StatelessWidget {
       label: 'Booking status: $label',
       child: ExcludeSemantics(
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: EdgeInsets.symmetric(
+            horizontal: AppSize.horizontal(12),
+            vertical: AppSize.vertical(8),
+          ),
           decoration: BoxDecoration(
             color: background,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSize.radius(8)),
           ),
           child: Wrap(
             spacing: 6,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Icon(icon, size: 16, color: color),
+              Icon(icon, size: AppSize.icon(16), color: color),
               Text(
                 label,
                 style: TextStyle(
                   color: color,
-                  fontSize: 13,
+                  fontSize: AppSize.font(13),
                   fontWeight: FontWeight.w600,
                 ),
               ),

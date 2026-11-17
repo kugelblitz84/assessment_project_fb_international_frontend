@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../navigation/presentation/adaptive_app_shell.dart';
+
+import '../../navigation/presentation/auto_care_brand.dart';
 
 class BootstrapView extends StatelessWidget {
   const BootstrapView({super.key});

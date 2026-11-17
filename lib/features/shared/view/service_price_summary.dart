@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../model/service_model.dart';
@@ -16,29 +18,29 @@ class ServicePriceSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
-      padding: const EdgeInsets.all(24),
+      padding: AppSize.cardPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'YOUR SERVICE',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: AppSize.font(12),
               fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
               color: AppColors.secondary,
             ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: AppSize.vertical(12)),
           Text(service.name, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
+          SizedBox(height: AppSize.vertical(12)),
           Wrap(
             spacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.schedule_outlined,
-                size: 18,
+                size: AppSize.icon(18),
                 color: AppColors.secondary,
               ),
               Text(
@@ -48,29 +50,32 @@ class ServicePriceSummary extends StatelessWidget {
             ],
           ),
           if (children.isNotEmpty) ...[
-            const SizedBox(height: 20),
+            SizedBox(height: AppSize.vertical(20)),
             const Divider(),
-            const SizedBox(height: 12),
+            SizedBox(height: AppSize.vertical(12)),
             ...children,
           ],
-          const SizedBox(height: 20),
+          SizedBox(height: AppSize.vertical(20)),
           const Divider(),
-          const SizedBox(height: 12),
+          SizedBox(height: AppSize.vertical(12)),
           const Text(
             'Service price',
             style: TextStyle(color: AppColors.secondary),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: AppSize.vertical(4)),
           Text(
             Formatters.price(service.price, service.currency),
             style: Theme.of(context).textTheme.headlineMedium,
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: AppSize.vertical(8)),
           const Text(
             'Review your appointment before booking.',
             style: TextStyle(color: AppColors.secondary),
           ),
-          if (action != null) ...[const SizedBox(height: 20), action!],
+          if (action != null) ...[
+            SizedBox(height: AppSize.vertical(20)),
+            action!,
+          ],
         ],
       ),
     ),

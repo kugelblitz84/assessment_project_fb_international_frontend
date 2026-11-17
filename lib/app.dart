@@ -27,7 +27,9 @@ class App extends ConsumerWidget {
           builder: (context, ref, _) {
             // Omit the Router subtree entirely until restoration resolves, so
             // protected pages cannot mount or start requests during startup/retry.
-            return ref.watch(sessionProvider).isLoading
+            return ref.watch(
+                  sessionProvider.select((session) => session.isLoading),
+                )
                 ? const BootstrapView()
                 : child ?? const SizedBox.shrink();
           },

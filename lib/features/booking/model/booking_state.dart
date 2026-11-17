@@ -1,12 +1,14 @@
 import '../../shared/model/appointment_model.dart';
 import '../../shared/model/availability_model.dart';
 
+enum BookingStep { schedule, review }
+
 class BookingState {
   const BookingState({
     required this.date,
     this.availability,
     this.slotId,
-    this.step = 0,
+    this.step = BookingStep.schedule,
     this.loadingSlots = false,
     this.submitting = false,
     this.uncertain = false,
@@ -17,7 +19,7 @@ class BookingState {
   final DateTime date;
   final AvailabilityModel? availability;
   final String? slotId;
-  final int step;
+  final BookingStep step;
   final bool loadingSlots;
   final bool submitting;
   final bool uncertain;
@@ -43,7 +45,7 @@ class BookingState {
     bool clearAvailability = false,
     String? slotId,
     bool clearSlot = false,
-    int? step,
+    BookingStep? step,
     bool? loadingSlots,
     bool? submitting,
     bool? uncertain,

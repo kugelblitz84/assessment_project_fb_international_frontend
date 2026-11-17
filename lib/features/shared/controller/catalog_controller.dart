@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_error_handler.dart';
 import '../model/catalog_state.dart';
+import '../model/service_model.dart';
 import '../service/service_catalog_service.dart';
 
 final catalogControllerProvider =
@@ -41,3 +42,18 @@ class CatalogController extends AsyncNotifier<CatalogState> {
     );
   }
 }
+
+/// Reusable catalogue projections avoid watching loading/refresh flags in cards.
+final catalogServicesProvider = Provider<List<ServiceModel>>(
+  (ref) => ref.watch(
+    catalogControllerProvider.select(
+      (catalog) => catalog.asData?.value.services ?? const <ServiceModel>[],
+    ),
+  ),
+);
+final catalogByIdProvider = Provider<Map<String, ServiceModel>>(
+  (ref) => Map.unmodifiable({
+    for (final service in ref.watch(catalogServicesProvider))
+      service.id: service,
+  }),
+);

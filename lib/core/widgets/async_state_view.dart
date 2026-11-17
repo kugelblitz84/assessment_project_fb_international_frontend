@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_spacing.dart';
 import '../network/api_error_handler.dart';
 import '../theme/app_colors.dart';
 
@@ -19,33 +20,43 @@ class StateMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+      padding: EdgeInsets.symmetric(
+        horizontal: AppSize.horizontal(16),
+        vertical: AppSize.vertical(32),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 440),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: AppSize.inset(20),
               decoration: const BoxDecoration(
                 color: AppColors.primarySoft,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 36, color: AppColors.primary),
+              child: Icon(
+                icon,
+                size: AppSize.icon(36),
+                color: AppColors.primary,
+              ),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: AppSize.vertical(20)),
             Text(
               title,
               style: Theme.of(context).textTheme.titleLarge,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: AppSize.vertical(8)),
             Text(
               message,
               style: const TextStyle(color: AppColors.secondary),
               textAlign: TextAlign.center,
             ),
-            if (action != null) ...[const SizedBox(height: 20), action!],
+            if (action != null) ...[
+              SizedBox(height: AppSize.vertical(20)),
+              action!,
+            ],
           ],
         ),
       ),
@@ -78,13 +89,13 @@ class LoadingState extends StatelessWidget {
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
     child: Padding(
-      padding: const EdgeInsets.all(48),
+      padding: AppSize.inset(48),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSize.vertical(16)),
             Text(label),
           ],
         ),
@@ -102,20 +113,20 @@ class InlineNotice extends StatelessWidget {
     liveRegion: true,
     child: Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: AppSize.inset(16),
       decoration: BoxDecoration(
         color: error ? AppColors.errorSoft : AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSize.radius(12)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
             error ? Icons.error_outline : Icons.info_outline,
-            size: 20,
+            size: AppSize.icon(20),
             color: error ? AppColors.error : AppColors.primary,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: AppSize.horizontal(10)),
           Expanded(
             child: Text(
               message,

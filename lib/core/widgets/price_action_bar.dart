@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../theme/app_spacing.dart';
 import '../theme/app_colors.dart';
 
 class PriceActionBar extends StatelessWidget {
@@ -10,8 +12,8 @@ class PriceActionBar extends StatelessWidget {
     builder: (context, constraints) {
       final total = Text(
         price,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: AppSize.font(20),
           color: AppColors.navy,
           fontWeight: FontWeight.w700,
         ),
@@ -21,13 +23,17 @@ class PriceActionBar extends StatelessWidget {
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [total, const SizedBox(height: 8), action],
+          children: [
+            total,
+            SizedBox(height: AppSize.vertical(8)),
+            action,
+          ],
         );
       }
       return Row(
         children: [
           Flexible(child: total),
-          const SizedBox(width: 16),
+          SizedBox(width: AppSize.horizontal(16)),
           Expanded(flex: 2, child: action),
         ],
       );

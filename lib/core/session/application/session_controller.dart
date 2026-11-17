@@ -38,7 +38,7 @@ class SessionController extends AsyncNotifier<AuthState> {
           : token;
       final user = await repository.getCurrentUser(token: activeToken);
       if (operation != _operation) return const Unauthenticated();
-      return Authenticated(user: user);
+      return Authenticated(user: user, generation: operation);
     } on InvalidSessionException {
       if (operation != _operation) return const Unauthenticated();
       coordinator.invalidate();
@@ -75,7 +75,9 @@ class SessionController extends AsyncNotifier<AuthState> {
   void updateUser(UserEntity user) {
     final current = state.asData?.value;
     if (current is Authenticated && current.user.id == user.id) {
-      state = AsyncData(Authenticated(user: user));
+      state = AsyncData(
+        Authenticated(user: user, generation: current.generation),
+      );
     }
   }
 
@@ -116,7 +118,11 @@ class SessionController extends AsyncNotifier<AuthState> {
         await storage.clearToken();
         return;
       }
-      if (ref.mounted) state = AsyncData(Authenticated(user: session.user));
+      if (ref.mounted) {
+        state = AsyncData(
+          Authenticated(user: session.user, generation: operation),
+        );
+      }
     } catch (_) {
       if (operation == _operation) {
         coordinator.invalidate();

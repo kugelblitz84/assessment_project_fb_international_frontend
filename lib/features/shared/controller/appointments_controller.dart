@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_error_handler.dart';
 import '../../../core/session/application/session_controller.dart';
+import '../../../core/session/application/session_identity_provider.dart';
 import '../../../core/session/domain/auth_state.dart';
 import '../model/appointments_state.dart';
 import '../service/appointment_service.dart';
@@ -16,9 +17,12 @@ final appointmentDetailsProvider = AsyncNotifierProvider.autoDispose
     );
 
 class AppointmentsController extends AsyncNotifier<AppointmentsState> {
+  int _generation = 0;
   @override
   Future<AppointmentsState> build() async {
-    final session = ref.watch(sessionProvider).asData?.value;
+    _generation++;
+    ref.watch(sessionIdentityProvider);
+    final session = ref.read(sessionProvider).asData?.value;
     final service = ref.watch(appointmentServiceProvider);
     if (session is! Authenticated) {
       return const AppointmentsState(ownerId: null);
@@ -34,7 +38,9 @@ class AppointmentsController extends AsyncNotifier<AppointmentsState> {
   }
 
   Future<void> refresh() async {
+    final generation = _generation;
     final current = state.asData?.value;
+    final identity = ref.read(sessionIdentityProvider);
     final session = ref.read(sessionProvider).asData?.value;
     if (current == null ||
         current.refreshing ||
@@ -47,7 +53,8 @@ class AppointmentsController extends AsyncNotifier<AppointmentsState> {
       () => ref.read(appointmentServiceProvider).getBookings(session.user.id),
     );
     if (!ref.mounted ||
-        !identical(session, ref.read(sessionProvider).asData?.value)) {
+        generation != _generation ||
+        identity != ref.read(sessionIdentityProvider)) {
       return;
     }
     state = AsyncData(
@@ -67,7 +74,8 @@ class AppointmentDetailsController
   final String bookingId;
   @override
   Future<AppointmentDetailsState> build() async {
-    final session = ref.watch(sessionProvider).asData?.value;
+    ref.watch(sessionIdentityProvider);
+    final session = ref.read(sessionProvider).asData?.value;
     final service = ref.watch(appointmentServiceProvider);
     if (session is! Authenticated) {
       return const AppointmentDetailsState(ownerId: null);
@@ -84,6 +92,7 @@ class AppointmentDetailsController
 
   Future<bool> cancel() async {
     final current = state.asData?.value;
+    final identity = ref.read(sessionIdentityProvider);
     final session = ref.read(sessionProvider).asData?.value;
     if (current == null ||
         current.busy ||
@@ -98,8 +107,7 @@ class AppointmentDetailsController
           .read(appointmentServiceProvider)
           .cancel(session.user.id, bookingId),
     );
-    if (!ref.mounted ||
-        !identical(session, ref.read(sessionProvider).asData?.value)) {
+    if (!ref.mounted || identity != ref.read(sessionIdentityProvider)) {
       return false;
     }
     state = AsyncData(

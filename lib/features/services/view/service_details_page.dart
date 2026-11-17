@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/navigation/presentation/adaptive_app_shell.dart';
+
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/responsive/adaptive_layout.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -33,7 +35,7 @@ class ServiceDetailsPage extends ConsumerWidget {
       icon: Icons.calendar_month_outlined,
       onPressed: service?.available == true ? book : null,
     );
-    return AdaptiveAppShell(
+    return AppPageScaffold(
       title: 'Service details',
       bottomBar: !desktop && service != null
           ? PriceActionBar(
@@ -75,28 +77,30 @@ class ServiceDetailsPage extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(
+                            AppSize.radius(20),
+                          ),
                           child: ServiceImage(
                             url: service.imageUrl,
                             label: service.name,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: AppSize.vertical(24)),
                         Text(
                           service.categoryName.toUpperCase(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.primary,
-                            fontSize: 12,
+                            fontSize: AppSize.font(12),
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSize.vertical(8)),
                         Text(
                           service.name,
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSize.vertical(16)),
                         Wrap(
                           spacing: 20,
                           runSpacing: 8,
@@ -104,8 +108,8 @@ class ServiceDetailsPage extends ConsumerWidget {
                           children: [
                             Text(
                               Formatters.price(service.price, service.currency),
-                              style: const TextStyle(
-                                fontSize: 24,
+                              style: TextStyle(
+                                fontSize: AppSize.font(24),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -117,42 +121,44 @@ class ServiceDetailsPage extends ConsumerWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: AppSize.vertical(24)),
                         Text(
                           'About this service',
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: AppSize.vertical(12)),
                         Text(
                           service.description,
                           style: Theme.of(context).textTheme.bodyLarge,
                         ),
                         if (service.inclusions.isNotEmpty) ...[
-                          const SizedBox(height: 28),
+                          SizedBox(height: AppSize.vertical(28)),
                           Text(
                             'What’s included',
                             style: Theme.of(context).textTheme.titleLarge,
                           ),
-                          const SizedBox(height: 12),
+                          SizedBox(height: AppSize.vertical(12)),
                           for (final inclusion in service.inclusions)
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSize.vertical(8),
+                              ),
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.check_circle_outline,
                                     color: AppColors.success,
-                                    size: 22,
+                                    size: AppSize.icon(22),
                                   ),
-                                  const SizedBox(width: 12),
+                                  SizedBox(width: AppSize.horizontal(12)),
                                   Expanded(child: Text(inclusion)),
                                 ],
                               ),
                             ),
                         ],
                         if (!service.available) ...[
-                          const SizedBox(height: 20),
+                          SizedBox(height: AppSize.vertical(20)),
                           const InlineNotice(
                             message:
                                 'This service is currently unavailable for booking.',

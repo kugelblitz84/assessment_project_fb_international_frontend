@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/navigation/presentation/adaptive_app_shell.dart';
+
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/network/api_error_handler.dart';
 import '../../../core/session/application/current_user_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -38,10 +40,10 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
     super.dispose();
   }
 
-  Future<void> _save() async {
+  void _save() {
     if (!_form.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    final saved = await ref
+    ref
         .read(profileControllerProvider.notifier)
         .save(
           UpdateProfilePayload(
@@ -49,7 +51,16 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
             email: _email.text.trim(),
           ),
         );
-    if (saved && mounted) {
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(profileControllerProvider);
+    ref.listen(profileControllerProvider.select((state) => state.saved), (
+      previous,
+      saved,
+    ) {
+      if (!saved || previous == true) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
@@ -58,20 +69,15 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
       } else {
         context.goNamed(AppRoutes.profile);
       }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final state = ref.watch(profileControllerProvider);
-    return AdaptiveAppShell(
+    });
+    return AppPageScaffold(
       title: 'Edit profile',
       body: SingleChildScrollView(
         child: PageContainer(
           maxWidth: 560,
           child: Card(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: AppSize.cardPadding,
               child: Form(
                 key: _form,
                 child: Column(
@@ -81,12 +87,12 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       'Your details',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: AppSize.vertical(8)),
                     const Text(
                       'Keep your account information up to date.',
                       style: TextStyle(color: AppColors.secondary),
                     ),
-                    const SizedBox(height: 28),
+                    SizedBox(height: AppSize.vertical(28)),
                     TextFormField(
                       controller: _name,
                       enabled: !state.saving,
@@ -99,7 +105,7 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                           ? 'Enter your name.'
                           : null,
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: AppSize.vertical(20)),
                     TextFormField(
                       controller: _email,
                       enabled: !state.saving,
@@ -111,13 +117,13 @@ class _EditProfilePageState extends ConsumerState<EditProfilePage> {
                       validator: Validators.email,
                       onFieldSubmitted: (_) => _save(),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: AppSize.vertical(24)),
                     if (state.errorCode != null) ...[
                       InlineNotice(
                         message: ApiErrorHandler.messageFor(state.errorCode),
                         error: true,
                       ),
-                      const SizedBox(height: 16),
+                      SizedBox(height: AppSize.vertical(16)),
                     ],
                     AppButton(
                       label: state.saving ? 'Saving…' : 'Save changes',

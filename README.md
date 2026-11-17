@@ -48,6 +48,17 @@ return destinations. Login/Register preserve that destination or default to Home
 Logout rebuilds Profile in guest mode; invalidation on private routes goes to Login.
 Malformed, external, ambiguous and traversal redirects remain rejected.
 
+Primary pages use four lazy `StatefulShellRoute.indexedStack` branches: Explore,
+Bookings, AI Assistant and Profile. The shell owns primary navigation. Tab switches
+restore the branch's last location; reselecting the active tab preserves its stack,
+scroll and filters. Inactive branches mute tickers. Booking details/confirmation and
+profile editing stay in their branches with primary navigation hidden; service
+details and appointment booking use the root navigator. Existing URLs remain valid.
+
+Authentication ownership changes replace branch navigators and clear private state
+without replacing GoRouter. Profile edits preserve the authentication generation,
+conversation, history filters and active booking drafts.
+
 Feature caching and background refresh stay independent of routing.
 SharedPreferences is retained for future caching; caching is not implemented.
 
@@ -97,9 +108,10 @@ domain errors are confirmed by the backend, HTTP 409 maps only to `CONFLICT`.
 Code shared by multiple business features belongs in `features/shared/`, using
 the same singular folder names. Core owns infrastructure and must not depend on
 concrete features. Keep one authoritative model/service for shared catalogue or
-appointment data. Private feature providers must clear on session changes and
-discard results from the previous account. Auth views continue using the existing
-Core session implementation; there is no separate feature auth service/controller.
+appointment data. Private feature providers clear on authentication ownership
+changes and discard results from the previous account. Auth views continue using the existing
+Core session implementation through a short-lived form controller; there is no
+second auth service or session store.
 
 Catalogue and appointment models, services, controllers and business widgets are
 shared under `features/shared/`. Home owns its filters, Booking owns its draft and
@@ -118,8 +130,8 @@ survive window resizing. See [UI implementation notes](docs/ui_implementation.md
 Riverpod's `AsyncNotifier` session controller owns restoration, authentication and
 logout. `currentUserProvider` derives the user from session state; there are no
 business-data caches yet. User state clears on logout, invalid sessions and account
-replacement. Login/register forms own submission state and errors, with no competing
-success-navigation logic. Replacing an account invalidates the previous request
+replacement. Login/register form controllers own submission state and errors,
+with no competing success-navigation logic. Replacing an account invalidates the previous request
 generation, drains pending refresh/auth work and clears previous native credentials.
 
 A stored access token is validated with `GET /auth/me`, allowing one coordinated
@@ -249,3 +261,6 @@ API error tests cover typed/nullable/no-content success, network/timeouts, HTTP
 failures, generic conflicts, malformed JSON/models, session exceptions and safe
 message fallbacks without mutation retries.
 Storage uses platform mocks; live backend and platform integration remain separate.
+
+See [the refactoring report](docs/refactoring_report.md) for the navigation choices,
+controller and widget changes, lifecycle rules, verification and complete file list.
