@@ -281,3 +281,43 @@ Validation results:
 - iOS compilation and native device storage were not tested on this Windows host.
 
 No backend repository changes, commits, or pushes were made.
+
+## Cookie refresh sessions
+
+The adjacent backend currently has no auth implementation. These contracts are provisional:
+login/register return `{accessToken, user}` and set a refresh cookie; POST `/auth/refresh`
+returns `{accessToken}` and rotates that cookie; GET `/auth/me` returns `{user}`;
+POST `/auth/logout` revokes the cookie session and returns 200/204. Refresh and logout
+send no bearer or refresh-token body. Refresh rejection uses 401; optional protected
+request code `ACCESS_TOKEN_EXPIRED` enables renewal (other explicit codes skip renewal).
+
+The API client injects bearer tokens and retries replayable requests once after a 401.
+Streams and multipart bodies are not replayed. A shared coordinator uses one pending
+Future, reuses newer saved tokens for late failures, and never retries refresh itself.
+Logout invalidates renewal, waits for pending auth, revokes remotely, and clears local
+credentials. Network failures preserve credentials and surface the bootstrap retry UI.
+Successful background renewal does not change application loading/navigation state.
+
+Native clients share a PersistCookieJar whose storage adapter uses Flutter Secure
+Storage, namespaced by backend URL. Cookie expiration, path, domain and Secure flags
+are handled by cookie_jar. Only trusted backend paths load or save cookies. Web uses
+browser-managed HttpOnly cookies and credentialed requests; it cannot delete these
+cookies locally if server logout fails. No refresh token is exposed in domain state.
+
+Production requires HTTPS, HttpOnly and Secure cookies, an appropriate SameSite policy,
+and a narrow cookie path covering refresh/logout. Prefer host-only cookies. Cross-site
+web deployments require SameSite=None; Secure, exact allowed CORS origins (never `*`),
+Access-Control-Allow-Credentials: true, and OPTIONS support for Content-Type and
+Authorization. Enforce CSRF protection on cookie-authenticated mutations (Origin checks
+and SameSite, or integrate the backend's CSRF token/header contract before deployment).
+Browser cookie blocking policies can prevent cross-site session persistence.
+
+The emulator HTTP default cannot send Secure cookies. Prefer local HTTPS with a trusted
+development certificate and API_BASE_URL override. If an HTTP-only local backend is
+used, its non-Secure cookie exception must be confined to its development configuration;
+the frontend does not weaken Secure handling or certificate validation.
+
+Refresh reuse detection and revocation belong to the backend. An ambiguous refresh
+network failure is surfaced without automatic retry because rotation may have happened.
+Single-flight coordination is per provider container; multiple browser tabs or independent
+app processes require backend concurrency tolerance or additional cross-context locking.

@@ -6,9 +6,18 @@ import '../domain/auth_session.dart';
 import '../domain/session_exception.dart';
 import '../domain/user_entity.dart';
 import 'user_model.dart';
+import '../application/token_refresh_coordinator.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._dio);
+  AuthRepositoryImpl(this._dio, {this.coordinator, this.transport});
+  final TokenRefreshCoordinator? coordinator;
+  final Dio? transport;
+  @override
+  Future<String> refresh() => coordinator!.refresh();
+  @override
+  Future<void> logout() => _request(() async {
+    await (transport ?? _dio).post<Object?>(ApiEndpoints.logout);
+  });
 
   final Dio _dio;
 
@@ -70,6 +79,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       return await request();
     } on DioException catch (error) {
+      if (error.error is SessionException) throw error.error!;
       if (error.response?.statusCode == 401) {
         if (restoringSession) throw const InvalidSessionException();
         throw const InvalidCredentialsException();

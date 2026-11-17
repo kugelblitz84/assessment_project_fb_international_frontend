@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'dart:async';
 
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_repository.dart';
@@ -45,6 +46,10 @@ class MemoryTokenStorage implements TokenStorage {
 }
 
 class StubAuthRepository implements AuthRepository {
+  @override
+  Future<String> refresh() async => throw const InvalidSessionException();
+  @override
+  Future<void> logout() async {}
   Object? currentUserError;
   Object? authError;
   String? restoredToken;

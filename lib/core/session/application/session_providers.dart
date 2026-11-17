@@ -7,5 +7,9 @@ import '../domain/auth_repository.dart';
 export 'token_storage_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
-  (ref) => AuthRepositoryImpl(ref.watch(dioProvider)),
+  (ref) => AuthRepositoryImpl(
+    ref.watch(dioProvider),
+    coordinator: ref.watch(tokenRefreshCoordinatorProvider),
+    transport: ref.watch(authTransportProvider),
+  ),
 );

@@ -10,5 +10,6 @@ class Authenticated extends AuthState {
 }
 
 class Unauthenticated extends AuthState {
-  const Unauthenticated();
+  const Unauthenticated({this.message});
+  final String? message;
 }

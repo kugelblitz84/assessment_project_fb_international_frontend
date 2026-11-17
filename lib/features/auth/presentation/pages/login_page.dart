@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/session/application/session_controller.dart';
+import '../../../../core/session/domain/auth_state.dart';
 import '../../../../routes/app_routes.dart';
 import '../auth_form_helpers.dart';
 
@@ -56,6 +57,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (ref.watch(sessionProvider).asData?.value case Unauthenticated(
+                message: final String message,
+              ))
+                Semantics(liveRegion: true, child: Text(message)),
               const Text('Your car. Expert care. One tap away.'),
               const SizedBox(height: 16),
               TextFormField(

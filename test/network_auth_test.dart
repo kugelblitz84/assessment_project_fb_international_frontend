@@ -65,6 +65,7 @@ void main() {
       dio = container.read(dioProvider);
       adapter = _ResponseAdapter();
       dio.httpClientAdapter = adapter;
+      container.read(authTransportProvider).httpClientAdapter = adapter;
       repository = AuthRepositoryImpl(dio);
     });
 

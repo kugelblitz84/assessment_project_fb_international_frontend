@@ -1,3 +1,4 @@
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 
 import 'package:assessment_project_fb_international_frontend/app.dart';
@@ -17,6 +18,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/session_fakes.dart';
 
 void main() {
+  setUp(() => FlutterSecureStorage.setMockInitialValues({}));
   late MemoryTokenStorage storage;
   late StubAuthRepository repository;
   late ProviderContainer container;
