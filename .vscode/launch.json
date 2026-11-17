@@ -1,0 +1,17 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "AutoCare UI demo",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/demo/main_demo.dart"
+    },
+    {
+      "name": "AutoCare (real authentication)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart"
+    }
+  ]
+}

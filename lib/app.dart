@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'routes/router_provider.dart';
 import 'core/session/application/session_controller.dart';
 import 'core/session/presentation/bootstrap_view.dart';
+import 'core/theme/app_theme.dart';
 
 class App extends ConsumerWidget {
   const App({super.key});
@@ -18,6 +19,9 @@ class App extends ConsumerWidget {
       splitScreenMode: true,
       builder: (context, child) => MaterialApp.router(
         title: 'AutoCare',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        themeMode: ThemeMode.light,
         routerConfig: router,
         builder: (context, child) => Consumer(
           builder: (context, ref, _) {

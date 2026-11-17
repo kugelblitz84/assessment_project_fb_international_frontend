@@ -6,7 +6,7 @@ import 'package:assessment_project_fb_international_frontend/core/session/applic
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
-import 'package:assessment_project_fb_international_frontend/features/booking/presentation/pages/booking_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/booking_page.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
 import 'package:assessment_project_fb_international_frontend/routes/route_access_policy.dart';
@@ -180,6 +180,9 @@ void main() {
           router.routeInformationProvider.value.uri.queryParameters['redirect'],
           target,
         );
+        await tester.ensureVisible(
+          find.text('Already have an account? Log in'),
+        );
         await tester.tap(find.text('Already have an account? Log in'));
         await tester.pumpAndSettle();
         if (register) {
@@ -199,6 +202,7 @@ void main() {
           find.byType(TextFormField).at(offset + 1),
           'password',
         );
+        await tester.ensureVisible(find.text(register ? 'Register' : 'Log in'));
         await tester.tap(find.text(register ? 'Register' : 'Log in'));
         await tester.pumpAndSettle();
         expect(
@@ -219,7 +223,8 @@ void main() {
     final router = container.read(routerProvider);
     router.goNamed(AppRoutes.profile);
     await tester.pumpAndSettle();
-    expect(find.text('Email: customer@example.com'), findsOneWidget);
+    expect(find.text('customer@example.com'), findsOneWidget);
+    await tester.ensureVisible(find.text('Log out'));
     await tester.tap(find.text('Log out'));
     await tester.pumpAndSettle();
     expect(storage.token, isNull);
@@ -243,9 +248,10 @@ void main() {
       router.go('/profile');
       await tester.pumpAndSettle();
       repository.currentUserError = null;
+      await tester.ensureVisible(find.text('Retry session restoration'));
       await tester.tap(find.text('Retry session restoration'));
       await tester.pumpAndSettle();
-      expect(find.text('Email: customer@example.com'), findsOneWidget);
+      expect(find.text('customer@example.com'), findsOneWidget);
     },
   );
 

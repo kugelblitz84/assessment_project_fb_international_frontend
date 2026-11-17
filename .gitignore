@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+AutoCare_Responsive_UI_Specification.md
+AutoCare_Feature_Architecture.md

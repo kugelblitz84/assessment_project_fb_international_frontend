@@ -1,17 +1,17 @@
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/presentation/not_found_page.dart';
-import '../features/assistant/presentation/pages/ai_assistant_page.dart';
-import '../features/auth/presentation/pages/login_page.dart';
-import '../features/auth/presentation/pages/register_page.dart';
-import '../features/booking/presentation/pages/booking_confirmation_page.dart';
-import '../features/booking/presentation/pages/booking_page.dart';
-import '../features/bookings/presentation/pages/booking_details_page.dart';
-import '../features/bookings/presentation/pages/my_bookings_page.dart';
-import '../features/home/presentation/pages/home_page.dart';
-import '../features/profile/presentation/pages/edit_profile_page.dart';
-import '../features/profile/presentation/pages/profile_page.dart';
-import '../features/services/presentation/pages/service_details_page.dart';
+import '../features/assistant/view/ai_assistant_page.dart';
+import '../features/auth/view/login_page.dart';
+import '../features/auth/view/register_page.dart';
+import '../features/booking/view/booking_confirmation_page.dart';
+import '../features/booking/view/booking_page.dart';
+import '../features/bookings/view/booking_details_page.dart';
+import '../features/bookings/view/my_bookings_page.dart';
+import '../features/home/view/home_page.dart';
+import '../features/profile/view/edit_profile_page.dart';
+import '../features/profile/view/profile_page.dart';
+import '../features/services/view/service_details_page.dart';
 import 'app_routes.dart';
 
 final appPages = <RouteBase>[
@@ -28,7 +28,10 @@ final appPages = <RouteBase>[
   GoRoute(
     name: AppRoutes.home,
     path: AppRoutes.homePath,
-    builder: (context, state) => const HomePage(),
+    builder: (context, state) => HomePage(
+      categoryId: state.uri.queryParameters['category'],
+      resetFilters: state.uri.queryParameters['browse'] == 'all',
+    ),
   ),
   GoRoute(
     name: AppRoutes.serviceDetails,

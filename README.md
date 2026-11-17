@@ -1,12 +1,28 @@
 ﻿# AutoCare
 
-Flutter foundations for a car service booking application. Authentication uses HTTP;
-service catalogue, booking screens, profile editing and the AI assistant remain
-placeholders. This migration adds no production UI design or dependencies.
+Responsive Flutter car service booking UI, using Riverpod 3, GoRouter, Dio and
+feature-first model/view/controller/service modules. All customer screens are
+implemented. Business features currently use labeled, in-memory sample data;
+backend DTOs will be connected during API integration. No dependencies were added.
 
 ## Run locally
 
 Use a Flutter SDK compatible with Dart `^3.11.5`:
+
+For a complete demo without a backend:
+
+```sh
+flutter pub get
+flutter run -t lib/demo/main_demo.dart
+# Or: flutter run -d chrome -t lib/demo/main_demo.dart
+```
+
+Sign in with any valid email and a nonempty password, or register a sample account.
+Demo credentials, profile changes and appointments stay in memory. Restarting resets
+the demo. This target overrides the existing Core auth dependencies; the actual
+session controller and route guards still run. It is not a production auth adapter.
+
+The normal entry point preserves real authentication:
 
 ```sh
 flutter pub get
@@ -53,6 +69,49 @@ registration is in `app_pages.dart`, access rules and redirect validation in
 | Edit profile | `editProfile` | `/profile/edit` | Authenticated |
 | AI assistant | `assistant` | `/assistant` | Public |
 | Not found | `notFound` | `/not-found` | Public |
+
+## Feature architecture
+
+Features follow the model/view/controller/service convention described in
+`AutoCare_Feature_Architecture.md`. Existing pages and auth form helpers live in
+`lib/features/<feature>/view/`. The current feature modules are `auth`, `home`,
+`services`, `booking`, `bookings`, `profile` and `assistant`.
+
+The singular folders separate responsibilities:
+
+| Folder | Responsibility |
+| --- | --- |
+| `model/` | Immutable typed response data, request payloads and feature state |
+| `service/` | Concrete API clients using `dioProvider`, returning typed data |
+| `controller/` | Riverpod 3 `Notifier`/`AsyncNotifier` state and service orchestration |
+| `view/` | Pages and widgets watching providers and dispatching events |
+
+Controllers wrap service operations with `ApiErrorHandler.run` from
+`lib/core/network/api_error_handler.dart`. Services return data directly; the
+handler produces `ApiResponse<T>` once. Check `result.success`, including for
+`void` or nullable data, and use `ApiErrorHandler.messageFor(result.errorCode)`
+for safe UI messages. The handler maps transport, HTTP, parsing and existing
+session exceptions without performing refresh, retries or navigation. Until
+domain errors are confirmed by the backend, HTTP 409 maps only to `CONFLICT`.
+
+Code shared by multiple business features belongs in `features/shared/`, using
+the same singular folder names. Core owns infrastructure and must not depend on
+concrete features. Keep one authoritative model/service for shared catalogue or
+appointment data. Private feature providers must clear on session changes and
+discard results from the previous account. Auth views continue using the existing
+Core session implementation; there is no separate feature auth service/controller.
+
+Catalogue and appointment models, services, controllers and business widgets are
+shared under `features/shared/`. Home owns its filters, Booking owns its draft and
+availability, Bookings owns its tab selection, Profile owns profile mutations and
+Assistant owns the conversation. Authentication views use the existing Core session.
+`SessionController.updateUser` accepts profile results only for the active account.
+
+Layouts use a 900px desktop breakpoint, a centered 560px compact column and a
+1200px desktop container. Compact pages have bottom navigation; desktop pages have
+top navigation. Shared theme tokens and bounded ScreenUtil spacing keep controls
+readable across widths. Form input, search, booking selections and chat drafts
+survive window resizing. See [UI implementation notes](docs/ui_implementation.md).
 
 ## Session architecture
 
@@ -116,6 +175,23 @@ never logged or displayed.
 
 ## Backend contract and limits
 
+The adjacent `../backend_project` currently exposes only the NestJS starter
+`GET /` route. Business services use `DemoWorkshop` sample responses for UI work,
+as authorized; model JSON keys and payloads are provisional. Every service receives
+the existing configured Dio. With `--dart-define=DEMO_DATA=false`, unintegrated
+operations return an explicit safe error rather than making guessed API calls.
+Replace the demo branches when these contracts are supplied:
+
+| Feature area | Missing contract |
+| --- | --- |
+| Service catalogue/details | Routes, envelope, IDs, search/filter parameters, price representation and duration |
+| Booking/history/details | Appointment model, create/list/detail/cancel operations, availability, date/time semantics, statuses and slot conflict code |
+| Profile editing | Update route, accepted fields, response shape and how to refresh the Core session user |
+| Assistant | Request/response messages, conversation handling and references to real catalogue service IDs |
+
+Authentication is already implemented in the frontend against the expectations
+below, but those endpoints are also absent from the local backend starter.
+
 These contracts must be supplied by the separate backend; tests use HTTP adapters,
 not a live server:
 
@@ -149,6 +225,27 @@ cookie behavior and iOS compilation still require platform integration validatio
 ## Verification
 
 Run `dart format lib test`, `flutter analyze`, and `flutter test`.
+Build the demo with `flutter build web -t lib/demo/main_demo.dart` or
+`flutter build apk --debug -t lib/demo/main_demo.dart`.
+
+Tests additionally cover the complete guest booking/cancellation interaction,
+duplicate submissions, conflicts, latest-date response ordering, ambiguous mutation
+timeouts, profile/session synchronization, assistant retry/action validation and
+session-scoped clearing. The responsive matrix renders all pages at 320, 375, 390,
+430, 768, 900, 1024, 1280 and 1440 logical pixels with normal and 2x text, checks
+keyboard-open chat and verifies state survives resizing.
+
+Optional screenshot generation writes to `build/ui_screenshots/`:
+
+```sh
+flutter test test/ui_screenshots_test.dart --dart-define=CAPTURE_UI=true
+# For legible review fonts, also pass --dart-define=SCREENSHOT_FONT=/path/to/font.ttf
+```
+
+Screenshots from widget tests deliberately exercise network-image fallbacks.
 Tests cover startup loading and deep links, guest/private access, return destinations,
 logout, restoration retry, redirect security, cookies and concurrent token refresh.
+API error tests cover typed/nullable/no-content success, network/timeouts, HTTP
+failures, generic conflicts, malformed JSON/models, session exceptions and safe
+message fallbacks without mutation retries.
 Storage uses platform mocks; live backend and platform integration remain separate.

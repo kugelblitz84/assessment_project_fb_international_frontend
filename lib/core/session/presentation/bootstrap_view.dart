@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../navigation/presentation/adaptive_app_shell.dart';
 
 class BootstrapView extends StatelessWidget {
   const BootstrapView({super.key});
@@ -9,6 +10,8 @@ class BootstrapView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          AutoCareBrand(),
+          SizedBox(height: 32),
           CircularProgressIndicator(),
           SizedBox(height: 16),
           Text('Starting AutoCare...'),

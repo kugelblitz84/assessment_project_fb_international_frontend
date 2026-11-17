@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/auth_session.dart';
 import '../domain/auth_state.dart';
 import '../domain/session_exception.dart';
+import '../domain/user_entity.dart';
 import 'session_providers.dart';
 import '../../network/dio_provider.dart';
 
@@ -68,6 +69,15 @@ class SessionController extends AsyncNotifier<AuthState> {
         .read(authRepositoryProvider)
         .register(name: name, email: email, password: password),
   );
+
+  /// Accept a profile response only for the currently authenticated account.
+  /// Credentials, refresh coordination and session ownership remain unchanged.
+  void updateUser(UserEntity user) {
+    final current = state.asData?.value;
+    if (current is Authenticated && current.user.id == user.id) {
+      state = AsyncData(Authenticated(user: user));
+    }
+  }
 
   Future<void> _authenticate(Future<AuthSession> Function() authenticate) {
     final operation = ++_operation;
