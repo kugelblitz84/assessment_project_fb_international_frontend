@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../routes/app_routes.dart';
-import '../../shared/controller/appointments_controller.dart';
-import '../controller/my_bookings_controller.dart';
-import 'widgets/booking_card.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/controller/my_bookings_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/view/widgets/booking_card.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class MyBookingsPage extends ConsumerWidget {
   const MyBookingsPage({super.key});
@@ -94,7 +95,7 @@ class MyBookingsPage extends ConsumerWidget {
                         if (data.errorCode != null) ...[
                           InlineNotice(
                             message:
-                                '${ApiErrorHandler.messageFor(data.errorCode)} These appointments may be out of date.',
+                                '${AppErrorMessages.messageFor(data.errorCode)} These appointments may be out of date.',
                             error: true,
                           ),
                           SizedBox(height: AppSize.vertical(16)),

@@ -24,5 +24,11 @@ class InvalidAuthResponseException extends SessionException {
 }
 
 class AuthRequestException extends SessionException {
-  const AuthRequestException(super.message);
+  const AuthRequestException(super.message, {this.code = 'UNEXPECTED_ERROR'});
+  final String code;
+}
+
+class SecureStorageException extends SessionException {
+  const SecureStorageException()
+    : super('Unable to access secure session storage.');
 }

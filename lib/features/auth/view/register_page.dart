@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../routes/app_routes.dart';
-import '../../../routes/route_access_policy.dart';
-import '../controller/auth_form_controller.dart';
-import '../model/auth_form_state.dart';
-import 'widgets/auth_form.dart';
-import 'widgets/auth_layout.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/controller/auth_form_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_form_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/view/widgets/auth_form.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/view/widgets/auth_layout.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
+import 'package:assessment_project_fb_international_frontend/routes/route_access_policy.dart';
 
 class RegisterPage extends ConsumerWidget {
   const RegisterPage({super.key});

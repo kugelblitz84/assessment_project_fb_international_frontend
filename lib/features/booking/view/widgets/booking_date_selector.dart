@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/app_surface.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 
 class BookingDateSelector extends StatelessWidget {
   const BookingDateSelector({

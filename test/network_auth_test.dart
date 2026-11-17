@@ -1,7 +1,12 @@
-import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/config/api_config.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
@@ -9,10 +14,6 @@ import 'package:assessment_project_fb_international_frontend/core/session/data/a
 import 'package:assessment_project_fb_international_frontend/core/session/data/secure_token_storage.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'support/session_fakes.dart';
 
@@ -59,9 +60,6 @@ void main() {
       storage = MemoryTokenStorage('saved-token');
       final container = ProviderContainer.test(
         overrides: [
-          backendReadinessProvider.overrideWith(
-            (ref) => BackendReadiness(() async {}),
-          ),
           tokenStorageProvider.overrideWithValue(storage),
           apiBaseUrlProvider.overrideWithValue('http://localhost:3000/api'),
         ],
@@ -70,7 +68,11 @@ void main() {
       adapter = _ResponseAdapter();
       dio.httpClientAdapter = adapter;
       container.read(authTransportProvider).httpClientAdapter = adapter;
-      repository = AuthRepositoryImpl(dio);
+      repository = AuthRepositoryImpl(
+        dio,
+        coordinator: container.read(tokenRefreshCoordinatorProvider),
+        transport: container.read(authTransportProvider),
+      );
     });
 
     test(

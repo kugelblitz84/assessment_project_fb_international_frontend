@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/widgets/app_resume_listener.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/navigation/page_scaffold.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../core/utils/formatters.dart';
-import '../controller/payment_controller.dart';
-import '../model/payment_models.dart';
-import '../service/payment_service.dart';
-import '../../shared/model/payment_summary.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_resume_listener.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/controller/payment_config_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/controller/payment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_summary.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key, required this.appointmentId});
@@ -82,8 +84,10 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                   loading: () => const LoadingState(
                     label: 'Loading verified payment status…',
                   ),
-                  error: (_, _) =>
-                      ErrorState(onRetry: () => ref.invalidate(provider)),
+                  error: (error, _) => ErrorState(
+                    code: ApiErrorHandler.codeFor(error),
+                    onRetry: () => ref.invalidate(provider),
+                  ),
                   data: (data) => Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -106,9 +110,9 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                               'The payment outcome is uncertain. Refresh the existing payment before attempting another charge.',
                           error: true,
                         ),
-                      if (data.error != null)
+                      if (data.errorCode != null)
                         InlineNotice(
-                          message: ApiErrorHandler.messageFor(data.error),
+                          message: AppErrorMessages.messageFor(data.errorCode),
                           error: true,
                         ),
                       if (launchError != null)
@@ -117,7 +121,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                         loading: () => const LoadingState(
                           label: 'Checking payment options…',
                         ),
-                        error: (_, _) => ErrorState(
+                        error: (error, _) => ErrorState(
+                          code: ApiErrorHandler.codeFor(error),
                           onRetry: () => ref.invalidate(paymentConfigProvider),
                         ),
                         data: (capabilities) => Column(

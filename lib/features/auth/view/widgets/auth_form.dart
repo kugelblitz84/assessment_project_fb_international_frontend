@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../model/auth_form_state.dart';
-import '../auth_form_helpers.dart';
-import 'password_form_field.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/validators.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_button.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_form_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/view/widgets/password_form_field.dart';
 
 /// Credentials live only in this mounted form; request state stays in Riverpod.
 class AuthForm extends StatefulWidget {
@@ -84,9 +85,7 @@ class _AuthFormState extends State<AuthForm> {
               textCapitalization: TextCapitalization.words,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.name],
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? 'Enter your name.'
-                  : null,
+              validator: AuthValidation.name,
             ),
             SizedBox(height: AppSize.vertical(20)),
           ],
@@ -104,7 +103,7 @@ class _AuthFormState extends State<AuthForm> {
               AutofillHints.email,
             ],
             autocorrect: false,
-            validator: validateEmail,
+            validator: Validators.email,
           ),
           SizedBox(height: AppSize.vertical(20)),
           PasswordFormField(

@@ -1,5 +1,5 @@
-import '../domain/session_exception.dart';
-import '../domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({

@@ -1,4 +1,4 @@
-import 'app_routes.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 /// Shared route classification and validation for all internal return locations.
 abstract final class RouteAccessPolicy {

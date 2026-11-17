@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../routes/app_routes.dart';
-import '../../../shared/model/appointment_model.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/admin_appointment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminAppointmentsPage extends ConsumerStatefulWidget {
   const AdminAppointmentsPage({super.key, this.initialStatus});

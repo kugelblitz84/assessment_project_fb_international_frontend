@@ -2,28 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/navigation/page_scaffold.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/widgets/responsive/adaptive_layout.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/formatters.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/app_resume_listener.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../core/widgets/price_action_bar.dart';
-import '../../../routes/app_routes.dart';
-import '../../shared/controller/service_details_controller.dart';
-import '../../shared/controller/catalog_controller.dart';
-import '../../shared/view/appointment_info.dart';
-import '../../shared/view/service_price_summary.dart';
-import '../controller/booking_controller.dart';
-import '../model/booking_state.dart';
-import 'widgets/booking_date_selector.dart';
-import 'widgets/booking_action_button.dart';
-import 'widgets/booking_review_section.dart';
-import 'widgets/booking_step_indicator.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_resume_listener.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/price_action_bar.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/responsive/adaptive_layout.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/view/widgets/appointment_info.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/widgets/booking_action_button.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/widgets/booking_date_selector.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/widgets/booking_review_section.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/widgets/booking_step_indicator.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/service_details_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/view/widgets/service_price_summary.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class BookingPage extends ConsumerWidget {
   const BookingPage({super.key, required this.serviceId});
@@ -115,8 +116,10 @@ class BookingPage extends ConsumerWidget {
                     loading: () => const LoadingState(
                       label: 'Checking appointment times…',
                     ),
-                    error: (_, _) =>
-                        ErrorState(onRetry: () => ref.invalidate(provider)),
+                    error: (error, _) => ErrorState(
+                      code: ApiErrorHandler.codeFor(error),
+                      onRetry: () => ref.invalidate(provider),
+                    ),
                     data: (draft) => Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
@@ -163,7 +166,7 @@ class BookingPage extends ConsumerWidget {
                           InlineNotice(
                             message: draft.uncertain
                                 ? 'We could not confirm whether your request was received. Check My Bookings before making another request.'
-                                : ApiErrorHandler.messageFor(draft.errorCode),
+                                : AppErrorMessages.messageFor(draft.errorCode),
                             error: true,
                           ),
                           SizedBox(height: AppSize.vertical(20)),

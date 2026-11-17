@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../auth_form_helpers.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_validation.dart';
 
 class PasswordFormField extends StatelessWidget {
   const PasswordFormField({
@@ -45,6 +45,6 @@ class PasswordFormField extends StatelessWidget {
     ],
     textInputAction: TextInputAction.done,
     onFieldSubmitted: (_) => onSubmitted(),
-    validator: validatePassword,
+    validator: AuthValidation.password,
   );
 }

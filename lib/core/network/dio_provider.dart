@@ -1,22 +1,21 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../session/application/token_storage_provider.dart';
-import '../session/application/token_refresh_coordinator.dart';
-import '../session/domain/session_exception.dart';
-import 'auth_interceptor.dart';
-import 'api_endpoints.dart';
-import 'backend_policy.dart';
-import 'cookie_transport.dart';
-import 'backend_readiness.dart';
 
-final apiBaseUrlProvider = Provider<String>(
-  (ref) => const String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue:
-        'https://fb-international-assessment-project.onrender.com/api/v1',
-  ),
-);
+import 'package:assessment_project_fb_international_frontend/core/config/api_config.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/backend_policy.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/cookie_transport.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/interceptors/auth_interceptor.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/interceptors/csrf_interceptor.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/interceptors/session_guard_interceptor.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/transport_timeouts.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/token_storage_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
+
 final backendPolicyProvider = Provider(
   (ref) => BackendPolicy(Uri.parse(ref.watch(apiBaseUrlProvider))),
 );
@@ -27,53 +26,21 @@ Dio _client(Ref ref) {
   final dio = Dio(
     BaseOptions(
       baseUrl: ref.watch(apiBaseUrlProvider),
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: TransportTimeouts.connect,
+      receiveTimeout: TransportTimeouts.receive,
+      sendTimeout: TransportTimeouts.send,
       contentType: Headers.jsonContentType,
       responseType: ResponseType.json,
       headers: {'Accept': Headers.jsonContentType},
       followRedirects: false,
     ),
   );
-  dio.interceptors.add(
-    ReadinessInterceptor(ref.watch(backendReadinessProvider)),
-  );
   ref
       .watch(cookieTransportProvider)
       .configure(dio, ref.watch(backendPolicyProvider).trusted);
   if (kIsWeb) {
     dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          if (options.path != ApiEndpoints.refresh &&
-              options.path != ApiEndpoints.logout) {
-            handler.next(options);
-            return;
-          }
-          try {
-            final csrf = await dio.get<Object?>(ApiEndpoints.csrf);
-            final data = csrf.data;
-            if (data is! Map || data['csrfToken'] is! String) {
-              throw const InvalidAuthResponseException();
-            }
-            options.headers['X-CSRF-Token'] = data['csrfToken'];
-            handler.next(options);
-          } catch (error) {
-            handler.reject(
-              DioException(
-                requestOptions: options,
-                error:
-                    error is DioException && error.response?.statusCode == 401
-                    ? const InvalidSessionException()
-                    : const AuthRequestException(
-                        'Unable to verify browser session.',
-                      ),
-              ),
-            );
-          }
-        },
-      ),
+      CsrfInterceptor(dio, ref.watch(backendPolicyProvider)),
     );
   }
   ref.onDispose(() => dio.close(force: true));
@@ -94,11 +61,13 @@ final tokenRefreshCoordinatorProvider = Provider((ref) {
       }
       return body['accessToken'] as String;
     } on DioException catch (error) {
+      if (error.error is SessionException) throw error.error!;
       if (error.response?.statusCode == 401) {
         throw const InvalidSessionException();
       }
-      throw const AuthRequestException(
-        'Unable to renew the session. Please try again.',
+      throw AuthRequestException(
+        ApiErrorMessages.messageFor(ApiErrorHandler.codeFor(error)),
+        code: ApiErrorHandler.codeFor(error),
       );
     }
   }, ref.watch(cookieTransportProvider).clear);
@@ -115,23 +84,6 @@ final dioProvider = Provider<Dio>((ref) {
     ),
   );
   final coordinator = ref.watch(tokenRefreshCoordinatorProvider);
-  dio.interceptors.add(
-    InterceptorsWrapper(
-      onRequest: (options, handler) {
-        if (options.extra.containsKey('authGeneration') &&
-            (!coordinator.enabled ||
-                options.extra['authGeneration'] != coordinator.generation)) {
-          handler.reject(
-            DioException(
-              requestOptions: options,
-              error: const InvalidSessionException(),
-            ),
-          );
-        } else {
-          handler.next(options);
-        }
-      },
-    ),
-  );
+  dio.interceptors.add(SessionGuardInterceptor(coordinator));
   return dio;
 });

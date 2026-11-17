@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 
-import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 
 void main() {
   group('ApiErrorHandler', () {
@@ -34,11 +36,11 @@ void main() {
     });
 
     for (final (type, code) in [
-      (DioExceptionType.connectionTimeout, 'TIMEOUT'),
-      (DioExceptionType.sendTimeout, 'TIMEOUT'),
-      (DioExceptionType.receiveTimeout, 'TIMEOUT'),
+      (DioExceptionType.connectionTimeout, 'CONNECTION_TIMEOUT'),
+      (DioExceptionType.sendTimeout, 'SEND_TIMEOUT'),
+      (DioExceptionType.receiveTimeout, 'RECEIVE_TIMEOUT'),
       (DioExceptionType.connectionError, 'NETWORK_ERROR'),
-      (DioExceptionType.cancel, 'UNEXPECTED_ERROR'),
+      (DioExceptionType.cancel, 'CANCELLED'),
       (DioExceptionType.badCertificate, 'UNEXPECTED_ERROR'),
       (DioExceptionType.unknown, 'UNEXPECTED_ERROR'),
     ]) {
@@ -66,7 +68,7 @@ void main() {
       (409, 'CONFLICT'),
       (429, 'RATE_LIMITED'),
       (500, 'SERVER_ERROR'),
-      (503, 'SERVER_ERROR'),
+      (503, 'BACKEND_UNAVAILABLE'),
       (418, 'UNEXPECTED_ERROR'),
     ]) {
       test('maps HTTP $status without exposing the response body', () async {
@@ -80,7 +82,7 @@ void main() {
         expect(result.success, isFalse);
         expect(result.data, isNull);
         expect(result.errorCode, code);
-        final message = ApiErrorHandler.messageFor(result.errorCode);
+        final message = AppErrorMessages.messageFor(result.errorCode);
         expect(message, isNotEmpty);
         expect(message, isNot(contains('private')));
       });
@@ -104,8 +106,8 @@ void main() {
     });
 
     for (final (failure, code) in <(SessionException, String)>[
-      (const InvalidSessionException(), 'UNAUTHORIZED'),
-      (const InvalidCredentialsException(), 'UNAUTHORIZED'),
+      (const InvalidSessionException(), 'SESSION_EXPIRED'),
+      (const InvalidCredentialsException(), 'INVALID_CREDENTIALS'),
       (
         const InvalidAuthResponseException('private response details'),
         'INVALID_RESPONSE',
@@ -134,21 +136,25 @@ void main() {
       });
     }
 
-    test('maps malformed model JSON and invalid field types', () async {
-      final malformed = await ApiErrorHandler.run<String>(
-        () => throw const FormatException('private payload'),
-      );
-      final wrongType = await ApiErrorHandler.run<String>(() async {
-        final json = <String, Object?>{'name': 42};
-        return json['name'] as String;
-      });
+    test(
+      'distinguishes malformed responses from programming type errors',
+      () async {
+        final malformed = await ApiErrorHandler.run<String>(
+          () => throw const FormatException('private payload'),
+        );
+        final wrongType = await ApiErrorHandler.run<String>(() async {
+          final json = <String, Object?>{'name': 42};
+          return json['name'] as String;
+        });
 
-      for (final result in [malformed, wrongType]) {
-        expect(result.success, isFalse);
-        expect(result.data, isNull);
-        expect(result.errorCode, 'INVALID_RESPONSE');
-      }
-    });
+        for (final result in [malformed, wrongType]) {
+          expect(result.success, isFalse);
+          expect(result.data, isNull);
+        }
+        expect(malformed.errorCode, 'INVALID_RESPONSE');
+        expect(wrongType.errorCode, 'UNEXPECTED_ERROR');
+      },
+    );
 
     test('maps malformed HTTP JSON wrapped by Dio', () async {
       final dio = Dio(BaseOptions(baseUrl: 'https://api.example.test'));
@@ -179,7 +185,7 @@ void main() {
     test('message lookup falls back safely for unknown and null codes', () {
       for (final code in [null, '', 'private backend details']) {
         expect(
-          ApiErrorHandler.messageFor(code),
+          AppErrorMessages.messageFor(code),
           'Something went wrong. Please try again.',
         );
       }

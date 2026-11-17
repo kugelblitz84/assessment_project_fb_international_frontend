@@ -1,5 +1,10 @@
 # AutoCare final integration report
 
+Historical integration snapshot from before the architectural cleanup. Source paths,
+readiness infrastructure and automated counts below describe that earlier revision.
+Use [architecture cleanup report](architecture_cleanup_report.md) for the current
+architecture and verification; the hosted acceptance evidence here remains historical.
+
 Date: **2026-11-17**, Asia/Dhaka. Production API:
 `https://fb-international-assessment-project.onrender.com/api/v1`.
 

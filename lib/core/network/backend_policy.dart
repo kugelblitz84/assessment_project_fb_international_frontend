@@ -1,4 +1,4 @@
-import 'api_endpoints.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
 
 class BackendPolicy {
   BackendPolicy(this.base);

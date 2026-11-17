@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../../../routes/app_routes.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/model/admin_validation.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/controller/admin_offer_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/admin_offer.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/offer_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/offer_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/admin_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminOfferFormPage extends ConsumerWidget {
   const AdminOfferFormPage({super.key, this.id});
@@ -85,7 +91,7 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
     if (!form.currentState!.validate()) return;
     final startsAt = WorkshopTime.parse(start.text),
         endsAt = WorkshopTime.parse(end.text);
-    final validation = AdminValidation.offer(
+    final validation = OfferValidation.offer(
       type,
       value.text,
       startsAt,
@@ -94,35 +100,30 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
     setState(() => error = validation);
     if (validation != null) return;
     final result = await ref
-        .read(adminMutationProvider.notifier)
-        .save(ApiEndpoints.adminOffers, {
-          'serviceId': service,
-          'title': title.text.trim(),
-          'description': description.text,
-          'discountType': type,
-          'discountValue': value.text,
-          'startsAt': startsAt!.toUtc().toIso8601String(),
-          'endsAt': endsAt!.toUtc().toIso8601String(),
-          'isActive': active,
-        }, id: widget.item?.id);
+        .read(adminOfferMutationProvider.notifier)
+        .save(
+          OfferPayload(
+            serviceId: service,
+            title: title.text,
+            description: description.text,
+            discountType: type,
+            discountValue: value.text,
+            startsAt: startsAt!,
+            endsAt: endsAt!,
+            isActive: active,
+          ),
+          id: widget.item?.id,
+        );
     if (!mounted) return;
     adminNotice(context, result, success: 'Offer saved.');
     if (result.success) {
-      if (widget.item != null) {
-        ref.invalidate(
-          adminOfferProvider((
-            owner: ref.read(adminOwnerProvider),
-            id: widget.item!.id,
-          )),
-        );
-      }
       context.go(AppRoutes.adminOffersPath);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminMutationProvider);
+    final busy = ref.watch(adminOfferMutationProvider);
     return Form(
       key: form,
       child: AdminPageBody(

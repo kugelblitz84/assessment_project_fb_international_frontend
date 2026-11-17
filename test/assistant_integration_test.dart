@@ -1,14 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter_test/flutter_test.dart';
+
 import 'package:dio/dio.dart';
-import 'package:assessment_project_fb_international_frontend/core/network/auth_interceptor.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/network/interceptors/auth_interceptor.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/request_access.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_recommendation.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/service/assistant_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/service_catalog_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/service/service_catalog_service.dart';
+
 import 'support/session_fakes.dart';
 
 const serviceId = '11111111-1111-4111-8111-111111111111';
@@ -99,12 +103,12 @@ void main() {
       );
       final adapter = _Adapter();
       dio.httpClientAdapter = adapter;
-      final catalog = await ServiceCatalogService(dio, null).getServices();
+      final catalog = await ServiceCatalogService(dio).getServices();
       expect(adapter.last!.path, '/services');
       expect(catalog.single.isPackage, true);
       expect(catalog.single.price, 1400);
       expect(catalog.single.originalPrice, 1600);
-      final reply = await AssistantService(dio, null).send(
+      final reply = await AssistantService(dio).send(
         const AssistantRequestPayload(
           messages: [
             AssistantMessageModel(
@@ -148,11 +152,16 @@ void main() {
         dio.interceptors.add(
           AuthInterceptor(
             tokenStorage: storage,
+            coordinator: TokenRefreshCoordinator(
+              storage,
+              () async => 'renewed',
+              () async {},
+            ),
             apiBaseUri: Uri.parse('http://localhost:3000/api/v1'),
             dio: dio,
           ),
         );
-        await AssistantService(dio, null).send(
+        await AssistantService(dio).send(
           const AssistantRequestPayload(
             messages: [
               AssistantMessageModel(
@@ -195,6 +204,8 @@ class _Adapter implements HttpClientAdapter {
               'type': 'PACKAGE',
               'currency': 'BDT',
               'durationMinutes': 105,
+              'available': true,
+              'inclusions': <String>[],
             },
           ]
         : answer();

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/app_surface.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/session/domain/user_entity.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
 
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({super.key, required this.user, required this.onEdit});

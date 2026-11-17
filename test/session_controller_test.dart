@@ -1,17 +1,18 @@
 import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/core/network/cookie_transport.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-
 import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 import 'support/session_fakes.dart';
 
@@ -41,6 +42,47 @@ void main() {
     );
     expect(repository.restoredToken, isNull);
     expect(repository.refreshCalls, 0);
+  });
+
+  test(
+    'a stale restoration failure cannot disable or replace a newer login',
+    () async {
+      storage.token = 'old-token';
+      repository.currentUserGate = Completer<UserEntity>();
+      container.listen(sessionProvider, (_, _) {});
+      container.read(sessionProvider.future);
+      while (repository.restoredToken == null) {
+        await Future<void>.delayed(Duration.zero);
+      }
+      await container
+          .read(sessionProvider.notifier)
+          .login(email: testUser.email, password: 'password');
+      repository.currentUserGate!.completeError(
+        const InvalidSessionException(),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(storage.token, 'test-access-token');
+      expect(container.read(currentUserProvider), same(testUser));
+      expect(container.read(tokenRefreshCoordinatorProvider).enabled, isTrue);
+    },
+  );
+
+  test('new login waits for old logout revocation and cleanup', () async {
+    storage.token = 'old-token';
+    await container.read(sessionProvider.future);
+    repository.logoutGate = Completer<void>();
+    final controller = container.read(sessionProvider.notifier);
+    final logout = controller.logout();
+    expect(container.read(currentUserProvider), isNull);
+    await repository.logoutStarted.future;
+    final login = controller.login(email: testUser.email, password: 'password');
+    await Future<void>.delayed(Duration.zero);
+    expect(repository.loginCalls, 0);
+    repository.logoutGate!.complete();
+    await Future.wait([logout, login]);
+    expect(storage.token, 'test-access-token');
+    expect(container.read(currentUserProvider), same(testUser));
+    expect(container.read(tokenRefreshCoordinatorProvider).enabled, isTrue);
   });
 
   test('browser-style restoration probes invisible refresh cookies', () async {
@@ -241,14 +283,14 @@ void main() {
   );
 
   test(
-    'logout propagates deletion failures and clears the user only on success',
+    'logout isolates private state immediately even if credential deletion fails',
     () async {
       storage.token = 'saved-token';
       await container.read(sessionProvider.future);
       storage.clearError = StateError('Storage unavailable');
       final controller = container.read(sessionProvider.notifier);
       await expectLater(controller.logout(), throwsA(isA<StateError>()));
-      expect(container.read(currentUserProvider), same(testUser));
+      expect(container.read(currentUserProvider), isNull);
       expect(storage.token, 'saved-token');
       storage.clearError = null;
       await controller.logout();

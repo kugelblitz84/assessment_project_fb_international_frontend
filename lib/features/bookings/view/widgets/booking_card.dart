@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/app_surface.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../routes/app_routes.dart';
-import '../../../shared/model/appointment_model.dart';
-import '../../../shared/view/booking_status_badge.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/view/widgets/booking_status_badge.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class BookingCard extends StatelessWidget {
   const BookingCard({super.key, required this.booking});

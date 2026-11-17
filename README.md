@@ -18,9 +18,10 @@ flutter run
 flutter run --dart-define=API_BASE_URL=https://fb-international-assessment-project.onrender.com/api/v1
 ```
 
-The free backend can need up to 90 seconds to start. A shared readiness check,
-connecting banner and manual Retry cover startup. Ordinary requests have 30-second
-timeouts; AI/payment/upload responses allow 75 seconds and large sends 60 seconds.
+The free backend can need up to 90 seconds to start. API requests wake it directly;
+there is no mandatory health preflight or global readiness banner. Transport defaults
+are 30 seconds to connect/send and 90 seconds to receive. AI/payment mutations and
+uploads have explicit 75-second response limits; uploads allow 60 seconds to send.
 Connection failures never automatically replay mutations or activate demo data.
 
 ## Explicit offline demo
@@ -32,10 +33,16 @@ flutter run -t lib/demo/main_demo.dart
 Use any valid email and nonempty password. The demo overrides existing session
 dependencies with memory-only fixtures; restart resets changes. It does not wait
 for backend readiness or enable online payments. DEMO_DATA=true selects sample
-business data only; use the explicit target for fully offline authentication.
+business data through provider overrides only; use the explicit target for fully offline authentication.
 Do not deploy demo options for assessment.
 
 ## Architecture and booking
+
+Catalog, appointment and workshop code live in their named feature domains. App
+shells and branding live under `lib/app`; Core has no feature or app dependencies.
+Admin resources have typed models, services and controllers. See the current
+[architecture cleanup report](docs/architecture_cleanup_report.md) for the tree,
+ownership decisions, baseline, verification results and remaining live checks.
 
 The existing trusted-backend transport, secure token storage, persistent native
 cookies, credentialed browser cookies, CSRF and coordinated refresh remain.
@@ -99,7 +106,8 @@ other live-provider/UI scenarios remain on the acceptance checklist.
 ## Build and deployment
 
 ```sh
-dart format lib test
+dart format lib test scripts/check_architecture.dart
+dart run scripts/check_architecture.dart
 flutter analyze
 flutter test
 flutter build web --release --dart-define=API_BASE_URL=https://fb-international-assessment-project.onrender.com/api/v1
@@ -127,7 +135,8 @@ No signing secrets were added.
 
 ## Verification and handover
 
-- [Final integration report](docs/final_integration_report.md): actual results, API coverage and changed files.
+- [Architecture cleanup report](docs/architecture_cleanup_report.md): current structure and refactor verification.
+- [Earlier integration report](docs/final_integration_report.md): historical hosted results and API coverage.
 - [Deployment instructions](docs/deployment.md): exact Render/Android settings and browser considerations.
 - [Hosted checklist](docs/live_testing_checklist.md): executed checks, blockers and operator actions.
 
@@ -144,4 +153,4 @@ HTTP checks do not claim browser/physical-device UI acceptance. No local backend
 local database, destructive suite or real-money payment is used.
 
 Existing [UI notes](docs/ui_implementation.md) and [admin notes](docs/admin_implementation.md)
-describe earlier work; the final report is authoritative for current readiness.
+describe earlier work; the architecture cleanup report describes the current source.

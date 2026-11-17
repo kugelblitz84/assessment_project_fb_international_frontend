@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../controller/assistant_controller.dart';
-import 'assistant_welcome_section.dart';
-import 'chat_message_bubble.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/view/widgets/assistant_welcome_section.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/view/widgets/chat_message_bubble.dart';
 
 class ChatMessageList extends ConsumerWidget {
   const ChatMessageList({
@@ -50,7 +50,7 @@ class ChatMessageList extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               InlineNotice(
-                message: ApiErrorHandler.messageFor(state.errorCode),
+                message: AppErrorMessages.messageFor(state.errorCode),
                 error: true,
               ),
               Wrap(

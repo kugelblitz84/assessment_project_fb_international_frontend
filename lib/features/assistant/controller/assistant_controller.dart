@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../shared/controller/catalog_controller.dart';
-import '../model/assistant_message_model.dart';
-import '../model/assistant_request_payload.dart';
-import '../model/assistant_state.dart';
-import '../model/assistant_recommendation.dart';
-import '../service/assistant_service.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_recommendation.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/service/assistant_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
 
 final assistantControllerProvider =
     NotifierProvider<AssistantController, AssistantState>(
@@ -64,28 +64,18 @@ class AssistantController extends Notifier<AssistantState> {
     final identity = ref.read(sessionIdentityProvider);
     // Watch once through the shared controller so recommendations resolve to the
     // same current service models used by Explore and booking.
-    final catalogResult = await ApiErrorHandler.run(
-      () => ref.read(catalogControllerProvider.future),
-    );
+    final catalog = await ref.read(catalogControllerProvider.future);
     if (!ref.mounted ||
         request != _generation ||
         identity != ref.read(sessionIdentityProvider)) {
       return;
     }
-    if (!catalogResult.success || catalogResult.data?.errorCode != null) {
+    if (catalog.errorCode != null) {
       state = state.copyWith(
         sending: false,
-        errorCode:
-            catalogResult.errorCode ??
-            catalogResult.data?.errorCode ??
-            'INVALID_RESPONSE',
+        errorCode: catalog.errorCode,
         failedMessageId: messageId,
       );
-      return;
-    }
-    if (!ref.mounted ||
-        request != _generation ||
-        identity != ref.read(sessionIdentityProvider)) {
       return;
     }
     final result = await ApiErrorHandler.run(
@@ -107,9 +97,7 @@ class AssistantController extends Notifier<AssistantState> {
       return;
     }
     // Resolve cards against a fresh authoritative catalog after generation.
-    await ApiErrorHandler.run(
-      () => ref.read(catalogControllerProvider.notifier).refresh(),
-    );
+    await ref.read(catalogControllerProvider.notifier).refresh();
     if (!ref.mounted ||
         request != _generation ||
         identity != ref.read(sessionIdentityProvider)) {
@@ -132,7 +120,8 @@ class AssistantController extends Notifier<AssistantState> {
     state = state.copyWith(
       messages: List.unmodifiable([...state.messages, safeMessage]),
       sending: false,
-      clearError: true,
+      errorCode: currentCatalog?.errorCode,
+      clearError: currentCatalog?.errorCode == null,
     );
   }
 }

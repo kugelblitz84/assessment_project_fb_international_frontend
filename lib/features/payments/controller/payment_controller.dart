@@ -1,38 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/session/application/current_user_provider.dart';
-import '../../shared/model/appointment_model.dart';
-import '../../shared/controller/appointments_controller.dart';
-import '../../shared/service/appointment_service.dart';
-import '../model/payment_models.dart';
-import '../service/payment_service.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_failure.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/controller/reconciliation_gate.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/service/payment_service.dart';
 
 typedef PaymentKey = ({SessionIdentity identity, String appointmentId});
-
-class PaymentState {
-  const PaymentState({
-    required this.appointment,
-    required this.attempts,
-    this.busy = false,
-    this.uncertain = false,
-    this.error,
-  });
-  final AppointmentModel appointment;
-  final List<PaymentAttempt> attempts;
-  final bool busy, uncertain;
-  final String? error;
-  PaymentState copy({bool? busy, bool? uncertain, String? error}) =>
-      PaymentState(
-        appointment: appointment,
-        attempts: attempts,
-        busy: busy ?? this.busy,
-        uncertain: uncertain ?? this.uncertain,
-        error: error,
-      );
-  bool get hasUnresolved =>
-      attempts.any((p) => p.status.unresolved || p.applied);
-}
 
 final paymentControllerProvider = AsyncNotifierProvider.autoDispose
     .family<PaymentController, PaymentState, PaymentKey>(
@@ -50,8 +30,10 @@ class PaymentController extends AsyncNotifier<PaymentState> {
   @override
   Future<PaymentState> build() async {
     ref.watch(sessionIdentityProvider);
-    if (!owned) throw const FormatException('Session changed.');
-    return _load();
+    if (!owned) throw const InvalidSessionException();
+    final response = await ApiErrorHandler.run(_load);
+    if (!response.success) throw ApiFailure(response.errorCode!);
+    return response.data!;
   }
 
   Future<PaymentState> _load() async {
@@ -59,11 +41,11 @@ class PaymentController extends AsyncNotifier<PaymentState> {
     final attempts = await ref
         .read(paymentServiceProvider)
         .history(key.appointmentId);
-    if (!owned) throw const FormatException('Session changed.');
+    if (!owned) throw const InvalidSessionException();
     final appointment = await ref
         .read(appointmentServiceProvider)
         .getBooking(user.id, key.appointmentId);
-    if (!owned) throw const FormatException('Session changed.');
+    if (!owned) throw const InvalidSessionException();
     return PaymentState(appointment: appointment, attempts: attempts);
   }
 
@@ -75,7 +57,7 @@ class PaymentController extends AsyncNotifier<PaymentState> {
   Future<void> refresh() async {
     final current = state.asData?.value;
     if (!owned || current == null || current.busy) return;
-    state = AsyncData(current.copy(busy: true));
+    state = AsyncData(current.copyWith(busy: true, clearError: true));
     final result = await ApiErrorHandler.run(() async {
       final attempts = await ref
           .read(paymentServiceProvider)
@@ -95,8 +77,9 @@ class PaymentController extends AsyncNotifier<PaymentState> {
     final fresh = await ApiErrorHandler.run(_load);
     if (!owned) return;
     state = AsyncData(
-      (fresh.data ?? current).copy(
-        error: result.errorCode ?? fresh.errorCode,
+      (fresh.data ?? current).copyWith(
+        errorCode: result.errorCode ?? fresh.errorCode,
+        clearError: result.success && fresh.success,
         uncertain:
             current.uncertain &&
             (fresh.data == null || fresh.data!.attempts.isEmpty),
@@ -110,11 +93,11 @@ class PaymentController extends AsyncNotifier<PaymentState> {
     if (!owned || current == null || current.busy || current.uncertain) {
       return null;
     }
-    state = AsyncData(current.copy(busy: true));
+    state = AsyncData(current.copyWith(busy: true, clearError: true));
     // Fetch authoritative eligibility/history before every attempt, including retries.
     final preflight = await ApiErrorHandler.run(() async {
       final config = await ref.read(paymentServiceProvider).config();
-      if (!owned) throw const FormatException('Session changed.');
+      if (!owned) throw const InvalidSessionException();
       if (!config.onlinePaymentEnabled) return null;
       return _load();
     });
@@ -124,8 +107,8 @@ class PaymentController extends AsyncNotifier<PaymentState> {
         fresh.hasUnresolved ||
         !fresh.appointment.canPayOnline) {
       state = AsyncData(
-        (fresh ?? current).copy(
-          error: preflight.errorCode ?? 'PAYMENT_NOT_ELIGIBLE',
+        (fresh ?? current).copyWith(
+          errorCode: preflight.errorCode ?? 'PAYMENT_NOT_ELIGIBLE',
         ),
       );
       _sync();
@@ -149,8 +132,9 @@ class PaymentController extends AsyncNotifier<PaymentState> {
     final updated = await ApiErrorHandler.run(_load);
     if (!owned) return null;
     state = AsyncData(
-      (updated.data ?? fresh).copy(
-        error: result.errorCode ?? updated.errorCode,
+      (updated.data ?? fresh).copyWith(
+        errorCode: result.errorCode ?? updated.errorCode,
+        clearError: result.success && updated.success,
         uncertain: uncertain,
       ),
     );

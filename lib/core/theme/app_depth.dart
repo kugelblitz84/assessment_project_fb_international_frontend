@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 
 /// A soft lower shadow and an upper highlight suggest machined, raised surfaces.
 abstract final class AppDepth {

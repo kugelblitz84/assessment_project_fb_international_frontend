@@ -1,23 +1,26 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/request_access.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
-import 'package:assessment_project_fb_international_frontend/core/utils/workshop_calendar.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/service/admin_repository.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/model/selected_image.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/service/admin_image_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/create_booking_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/appointments_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/appointment_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/availability_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/create_booking_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/appointment_service.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_calendar.dart';
 
 import 'support/demo_container.dart';
 
@@ -123,7 +126,6 @@ void main() {
       addTearDown(() => dio.close(force: true));
       final result = await BookingService(
         dio,
-        null,
       ).getAvailability(serviceId, DateTime(2026, 11, 20));
       final request = adapter.requests.single;
       expect(request.uri.path, '/api/v1/services/$serviceId/availability');
@@ -326,9 +328,9 @@ void main() {
           ..httpClientAdapter = adapter;
         addTearDown(() => dio.close(force: true));
         expect(
-          await AdminRepository(
-            dio,
-          ).upload(Uint8List.fromList([0xff, 0xd8, 0xff]), 'wash.jpg'),
+          await AdminImageService(dio).upload(
+            SelectedImage(Uint8List.fromList([0xff, 0xd8, 0xff]), 'wash.jpg'),
+          ),
           url,
         );
       }
@@ -343,13 +345,13 @@ void main() {
         ..httpClientAdapter = adapter;
       addTearDown(() => dio.close(force: true));
       final result = await ApiErrorHandler.run(
-        () => AdminRepository(
-          dio,
-        ).upload(Uint8List.fromList([0xff, 0xd8, 0xff]), 'wash.jpg'),
+        () => AdminImageService(dio).upload(
+          SelectedImage(Uint8List.fromList([0xff, 0xd8, 0xff]), 'wash.jpg'),
+        ),
       );
       expect(result.errorCode, 'IMAGE_UPLOAD_UNAVAILABLE');
       expect(
-        ApiErrorHandler.messageFor(result.errorCode),
+        AppErrorMessages.messageFor(result.errorCode),
         contains('previous image is preserved'),
       );
     },

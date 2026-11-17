@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../shared/controller/appointments_controller.dart';
-import '../../shared/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
 
 enum BookingsTab { upcoming, previous }
 

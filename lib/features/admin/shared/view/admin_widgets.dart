@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../controller/admin_providers.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 
 class AdminAsync<T> extends StatelessWidget {
   const AdminAsync({
@@ -21,6 +23,9 @@ class AdminAsync<T> extends StatelessWidget {
     loading: () => const LoadingState(),
     error: (error, _) => ErrorState(
       code: error is AdminFailure ? error.code : 'UNEXPECTED_ERROR',
+      message: AppErrorMessages.messageFor(
+        error is AdminFailure ? error.code : 'UNEXPECTED_ERROR',
+      ),
       onRetry: onRetry,
     ),
   );
@@ -55,10 +60,13 @@ void adminNotice(
   ApiResponse<void> result, {
   String success = 'Changes saved.',
 }) {
+  if (result.errorCode == 'CANCELLED') return;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
       content: Text(
-        result.success ? success : ApiErrorHandler.messageFor(result.errorCode),
+        result.success
+            ? success
+            : AppErrorMessages.messageFor(result.errorCode),
       ),
     ),
   );

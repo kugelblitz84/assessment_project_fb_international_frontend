@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_depth.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/service_image.dart';
-import '../../../../routes/app_routes.dart';
-import '../../../home/controller/home_controller.dart';
-import '../../model/assistant_message_model.dart';
-import '../../model/assistant_recommendation.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_depth.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_recommendation.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/view/widgets/service_image.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class ChatMessageBubble extends StatelessWidget {
   const ChatMessageBubble({
@@ -67,27 +65,18 @@ class ChatMessageBubble extends StatelessWidget {
   }
 }
 
-class AssistantRecommendationCard extends ConsumerWidget {
+class AssistantRecommendationCard extends StatelessWidget {
   const AssistantRecommendationCard({super.key, required this.recommendation});
   final AssistantRecommendation recommendation;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final service = recommendation.service;
     if (service == null) {
       return TextButton.icon(
         onPressed: () {
-          // Repeating the same recommendation is still an explicit browse intent.
-          ref
-              .read(homeControllerProvider.notifier)
-              .browse(recommendation.action.categoryId);
-          context.goNamed(
-            AppRoutes.home,
-            queryParameters: {
-              'browse': 'all',
-              if (recommendation.action.categoryId != null)
-                'category': recommendation.action.categoryId!,
-            },
+          context.go(
+            AppRoutes.browseServicesLocation(recommendation.action.categoryId),
           );
         },
         icon: const Icon(Icons.grid_view_outlined),

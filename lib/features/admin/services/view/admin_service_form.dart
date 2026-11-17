@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../../../routes/app_routes.dart';
-import '../../media/controller/admin_image_controller.dart';
-import '../../media/view/admin_image_field.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/model/admin_validation.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/admin_category_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/admin_category.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/view/admin_image_field.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/admin_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminServiceFormPage extends ConsumerWidget {
   const AdminServiceFormPage({super.key, this.id, this.package = false});
@@ -164,9 +169,9 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
         ),
     ];
     final validation =
-        AdminValidation.inclusions(values) ??
+        ServiceValidation.inclusions(values) ??
         (widget.package
-            ? AdminValidation.packageItems(
+            ? ServiceValidation.packageItems(
                 items,
                 widget.individuals.map((s) => s.id).toSet(),
               )
@@ -186,23 +191,25 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
     final image = ref.read(adminImageProvider(imageKey));
     if (image.busy) return;
     final result = await ref
-        .read(adminMutationProvider.notifier)
-        .save(ApiEndpoints.adminServices, {
-          'name': name.text.trim(),
-          if (slug.text.isNotEmpty) 'slug': slug.text,
-          'description': description.text,
-          'categoryId': category,
-          'type': widget.package ? 'PACKAGE' : 'INDIVIDUAL',
-          'price': price.text,
-          'currency': 'BDT',
-          'durationMinutes': int.parse(duration.text),
-          'sortOrder': int.parse(order.text),
-          'isActive': active,
-          'isFeatured': featured,
-          'imageUrl': image.url,
-          'inclusions': values,
-          'packageItems': items.map((i) => i.toJson()).toList(),
-        }, id: widget.item?.id);
+        .read(adminServiceMutationProvider.notifier)
+        .save(
+          ServicePayload(
+            name: name.text,
+            slug: slug.text,
+            description: description.text,
+            categoryId: category,
+            type: widget.package ? 'PACKAGE' : 'INDIVIDUAL',
+            price: price.text,
+            durationMinutes: int.parse(duration.text),
+            sortOrder: int.parse(order.text),
+            isActive: active,
+            isFeatured: featured,
+            imageUrl: image.url,
+            inclusions: values,
+            packageItems: items,
+          ),
+          id: widget.item?.id,
+        );
     if (!mounted) return;
     adminNotice(
       context,
@@ -210,14 +217,6 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
       success: widget.package ? 'Package saved.' : 'Service saved.',
     );
     if (result.success) {
-      if (widget.item != null) {
-        ref.invalidate(
-          adminServiceProvider((
-            owner: ref.read(adminOwnerProvider),
-            id: widget.item!.id,
-          )),
-        );
-      }
       context.go(path);
     }
   }
@@ -230,7 +229,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
     TextInputType? keyboard,
   }) => TextFormField(
     controller: c,
-    enabled: !ref.watch(adminMutationProvider),
+    enabled: !ref.watch(adminServiceMutationProvider),
     maxLines: lines,
     keyboardType: keyboard,
     decoration: InputDecoration(labelText: label),
@@ -238,7 +237,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
   );
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminMutationProvider);
+    final busy = ref.watch(adminServiceMutationProvider);
     final image = ref.watch(adminImageProvider(imageKey));
     final remaining = widget.individuals
         .where((s) => !quantities.containsKey(s.id))

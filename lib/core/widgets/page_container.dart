@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'responsive/adaptive_layout.dart';
-import '../theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/responsive/adaptive_layout.dart';
 
 class PageContainer extends StatelessWidget {
   const PageContainer({

@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/session/application/current_user_provider.dart';
-import '../../../../core/session/application/session_controller.dart';
-import '../../../../core/widgets/navigation/auto_care_brand.dart';
-import '../../../../routes/app_routes.dart';
-import 'admin_widgets.dart';
-import '../controller/admin_providers.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/widgets/auto_care_brand.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/logout_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminShell extends ConsumerStatefulWidget {
   const AdminShell({super.key, required this.child, required this.path});
@@ -17,7 +18,6 @@ class AdminShell extends ConsumerStatefulWidget {
 }
 
 class _AdminShellState extends ConsumerState<AdminShell> {
-  bool loggingOut = false;
   static const destinations = [
     (AppRoutes.adminPath, 'Dashboard', Icons.dashboard_outlined),
     (AppRoutes.adminPaymentsPath, 'Payments', Icons.payments_outlined),
@@ -32,7 +32,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
     ),
   ];
   Future<void> logout() async {
-    if (loggingOut ||
+    if (ref.read(logoutControllerProvider).loading ||
         !await adminConfirm(
           context,
           'Log out?',
@@ -41,20 +41,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
         !mounted) {
       return;
     }
-    setState(() => loggingOut = true);
-    try {
-      await ref.read(sessionProvider.notifier).logout();
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Unable to clear your session. Please try again.'),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => loggingOut = false);
-    }
+    await ref.read(logoutControllerProvider.notifier).logout();
   }
 
   Widget navigation(bool drawer) => SafeArea(
@@ -87,8 +74,12 @@ class _AdminShellState extends ConsumerState<AdminShell> {
         const Divider(),
         ListTile(
           leading: const Icon(Icons.logout),
-          title: Text(loggingOut ? 'Logging out…' : 'Logout'),
-          onTap: loggingOut ? null : logout,
+          title: Text(
+            ref.watch(logoutControllerProvider).loading
+                ? 'Logging out…'
+                : 'Logout',
+          ),
+          onTap: ref.watch(logoutControllerProvider).loading ? null : logout,
         ),
       ],
     ),

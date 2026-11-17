@@ -1,18 +1,21 @@
-import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/config/api_config.dart';
+import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_auth.dart';
-import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
+
 import 'session_fakes.dart';
 
 const categoryId = 'c1000000-0000-4000-8000-000000000001';
@@ -207,9 +210,6 @@ ProviderContainer adminContainer({
     );
   final container = ProviderContainer.test(
     overrides: [
-      backendReadinessProvider.overrideWith(
-        (ref) => BackendReadiness(() async {}),
-      ),
       if (imagePicker != null)
         adminImagePickerProvider.overrideWithValue(imagePicker),
       demoModeProvider.overrideWithValue(true),

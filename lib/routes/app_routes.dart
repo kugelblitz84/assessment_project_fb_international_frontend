@@ -1,4 +1,15 @@
 abstract final class AppRoutes {
+  static int _browseRequest = 0;
+
+  /// An explicit browse action resets filters even when the category repeats.
+  static String browseServicesLocation(String? categoryId) => Uri(
+    path: homePath,
+    queryParameters: {
+      'browse': 'all',
+      'category': ?categoryId,
+      'intent': '${++_browseRequest}',
+    },
+  ).toString();
   static const adminPaymentsPath = '/admin/payments';
   static const adminPath = '/admin';
   static const adminCategoriesPath = '/admin/categories';

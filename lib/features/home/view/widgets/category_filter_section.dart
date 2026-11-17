@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../controller/home_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 
 class CategoryFilterSection extends ConsumerWidget {
   const CategoryFilterSection({super.key});

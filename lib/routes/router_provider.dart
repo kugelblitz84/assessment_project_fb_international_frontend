@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/widgets/navigation/not_found_page.dart';
-import '../core/session/application/session_controller.dart';
-import '../core/session/application/session_identity_provider.dart';
-import '../core/session/domain/auth_state.dart';
-import 'app_pages.dart';
-import 'app_routes.dart';
-import 'route_access_policy.dart';
+import 'package:assessment_project_fb_international_frontend/app/widgets/not_found_page.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_pages.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
+import 'package:assessment_project_fb_international_frontend/routes/route_access_policy.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final refresh = _RouterRefresh();

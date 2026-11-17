@@ -1,8 +1,8 @@
-import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'dart:async';
 
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_repository.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/token_storage.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
@@ -46,6 +46,10 @@ class MemoryTokenStorage implements TokenStorage {
 }
 
 class StubAuthRepository implements AuthRepository {
+  Completer<void>? logoutGate;
+  final logoutStarted = Completer<void>();
+  Object? logoutError;
+  int loginCalls = 0;
   int refreshCalls = 0;
   String? refreshToken;
   Object? refreshError;
@@ -57,7 +61,12 @@ class StubAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    if (!logoutStarted.isCompleted) logoutStarted.complete();
+    if (logoutGate != null) await logoutGate!.future;
+    if (logoutError != null) throw logoutError!;
+  }
+
   Object? currentUserError;
   Object? authError;
   String? restoredToken;
@@ -81,10 +90,10 @@ class StubAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthSession> login({
-    required String email,
-    required String password,
-  }) => _authenticate();
+  Future<AuthSession> login({required String email, required String password}) {
+    loginCalls++;
+    return _authenticate();
+  }
 
   @override
   Future<AuthSession> register({

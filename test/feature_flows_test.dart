@@ -1,26 +1,29 @@
-import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_services.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_workshop.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/create_booking_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/assistant/service/assistant_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/controller/profile_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/model/update_profile_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/appointments_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/catalog_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/appointment_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/availability_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/create_booking_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/appointment_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/demo_workshop.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
+
 import 'support/demo_container.dart';
 
 void main() {
@@ -153,7 +156,7 @@ void main() {
       final oldRequest = controller.selectDate(oldDay);
       await controller.selectDate(latestDay);
       service.gates[oldDay]!.complete(
-        service.demo!.availability('exterior-wash', oldDay),
+        service.workshop.availability('exterior-wash', oldDay),
       );
       await oldRequest;
       expect(container.read(provider).requireValue.date, latestDay);
@@ -274,6 +277,9 @@ void main() {
                 data: [
                   {
                     'id': 'live-service',
+                    'available': true,
+                    'type': 'INDIVIDUAL',
+                    'inclusions': <String>[],
                     'name': 'Live wash',
                     'description': 'Live catalog',
                     'categoryId': 'live-category',
@@ -305,7 +311,7 @@ void main() {
       await container.read(sessionProvider.future);
       container.listen(appointmentsControllerProvider, (_, _) {});
       await service.started.future;
-      final oldItems = service.demo!.appointments('demo-driver');
+      final oldItems = service.workshop.appointments('demo-driver');
       await container.read(sessionProvider.notifier).logout();
       await container
           .read(sessionProvider.notifier)
@@ -355,8 +361,8 @@ void main() {
   });
 }
 
-class GatedAppointmentService extends AppointmentService {
-  GatedAppointmentService(super.dio, super.demo);
+class GatedAppointmentService extends DemoAppointmentService {
+  GatedAppointmentService(super.dio, super.workshop);
   final started = Completer<void>();
   final gate = Completer<List<AppointmentModel>>();
   @override
@@ -367,8 +373,8 @@ class GatedAppointmentService extends AppointmentService {
   }
 }
 
-class GatedAssistantService extends AssistantService {
-  GatedAssistantService(super.dio, super.demo);
+class GatedAssistantService extends DemoAssistantService {
+  GatedAssistantService(super.dio, super.workshop);
   final started = Completer<void>();
   final gate = Completer<AssistantMessageModel>();
   @override
@@ -378,16 +384,16 @@ class GatedAssistantService extends AssistantService {
   }
 }
 
-class RacingBookingService extends BookingService {
-  RacingBookingService(super.dio, super.demo);
+class RacingBookingService extends DemoBookingService {
+  RacingBookingService(super.dio, super.workshop);
   final gates = <DateTime, Completer<AvailabilityModel>>{};
   @override
   Future<AvailabilityModel> getAvailability(String serviceId, DateTime date) =>
       gates[date]?.future ?? super.getAvailability(serviceId, date);
 }
 
-class TimeoutAppointmentService extends AppointmentService {
-  TimeoutAppointmentService(super.dio, super.demo);
+class TimeoutAppointmentService extends DemoAppointmentService {
+  TimeoutAppointmentService(super.dio, super.workshop);
   int calls = 0;
   @override
   Future<AppointmentModel> create(
@@ -402,8 +408,8 @@ class TimeoutAppointmentService extends AppointmentService {
   }
 }
 
-class RetryingAssistantService extends AssistantService {
-  RetryingAssistantService(super.dio, super.demo);
+class RetryingAssistantService extends DemoAssistantService {
+  RetryingAssistantService(super.dio, super.workshop);
   int calls = 0;
   @override
   Future<AssistantMessageModel> send(AssistantRequestPayload payload) async {

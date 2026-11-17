@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../domain/auth_session.dart';
-import '../domain/auth_state.dart';
-import '../domain/session_exception.dart';
-import '../domain/user_entity.dart';
-import 'session_providers.dart';
-import '../../network/dio_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 final sessionProvider = AsyncNotifierProvider<SessionController, AuthState>(
   SessionController.new,
@@ -15,43 +15,76 @@ final sessionProvider = AsyncNotifierProvider<SessionController, AuthState>(
 
 class SessionController extends AsyncNotifier<AuthState> {
   int _operation = 0;
-  Future<void>? _pendingAuthentication;
+  // Login, registration and logout share one credential-write queue.
+  Future<void>? _pendingCredentials;
   @override
   Future<AuthState> build() async {
     final operation = _operation;
     final storage = ref.watch(tokenStorageProvider);
     final repository = ref.watch(authRepositoryProvider);
+    final cookies = ref.watch(cookieTransportProvider);
     final coordinator = ref.read(tokenRefreshCoordinatorProvider);
-    coordinator.onInvalidSession = () {
+    void invalidSession() {
       if (ref.mounted) state = const AsyncData(Unauthenticated());
-    };
+    }
+
+    coordinator.onInvalidSession = invalidSession;
+    ref.onDispose(() {
+      if (identical(coordinator.onInvalidSession, invalidSession)) {
+        coordinator.onInvalidSession = null;
+      }
+    });
     try {
-      final token = await storage.readToken();
-      if ((token == null || token.isEmpty) &&
-          !await ref.read(cookieTransportProvider).canRestoreSession()) {
+      final blocked = await cookies.restorationBlocked();
+      if (!ref.mounted || operation != _operation) return _settledSession();
+      if (blocked) {
         coordinator.invalidate();
         return const Unauthenticated();
       }
-      coordinator.enabled = true;
+      final token = await storage.readToken();
+      if (!ref.mounted || operation != _operation) return _settledSession();
+      if ((token == null || token.isEmpty) &&
+          !await cookies.canRestoreSession()) {
+        if (!ref.mounted || operation != _operation) return _settledSession();
+        coordinator.invalidate();
+        return const Unauthenticated();
+      }
+      if (!ref.mounted || operation != _operation) return _settledSession();
+      coordinator.enable();
       final activeToken = token == null || token.isEmpty
           ? await repository.refresh()
           : token;
+      if (!ref.mounted || operation != _operation) return _settledSession();
       final user = await repository.getCurrentUser(token: activeToken);
-      if (operation != _operation) return const Unauthenticated();
+      if (!ref.mounted || operation != _operation) return _settledSession();
       return Authenticated(user: user, generation: operation);
     } on InvalidSessionException {
-      if (operation != _operation) return const Unauthenticated();
+      if (!ref.mounted || operation != _operation) return _settledSession();
       coordinator.invalidate();
-      await coordinator.drain();
-      await storage.clearToken();
-      await ref.read(cookieTransportProvider).clear();
-      return const Unauthenticated();
+      // Cleanup joins the credential queue so a later login cannot race an old
+      // storage/cookie deletion that has already started.
+      final cleanup = () async {
+        await coordinator.drain();
+        if (!ref.mounted || operation != _operation) return;
+        try {
+          await storage.clearToken();
+        } finally {
+          await cookies.clear();
+        }
+      }();
+      await _trackCredentials(cleanup);
+      return _settledSession();
     } catch (_) {
+      if (!ref.mounted || operation != _operation) return _settledSession();
       coordinator.invalidate();
       rethrow;
     }
-    // Other failures retain credentials, but protected calls stay disabled.
+    // Transient failures retain credentials; protected requests remain disabled.
   }
+
+  AuthState _settledSession() => ref.mounted
+      ? state.asData?.value ?? const Unauthenticated()
+      : const Unauthenticated();
 
   Future<void> login({required String email, required String password}) =>
       _authenticate(
@@ -88,9 +121,17 @@ class SessionController extends AsyncNotifier<AuthState> {
     final pending = _performAuthentication(
       authenticate,
       operation,
-      _pendingAuthentication,
+      _pendingCredentials,
     );
-    _pendingAuthentication = pending;
+    return _trackCredentials(pending);
+  }
+
+  Future<void> _trackCredentials(Future<void> operation) {
+    late final Future<void> pending;
+    pending = operation.whenComplete(() {
+      if (identical(_pendingCredentials, pending)) _pendingCredentials = null;
+    });
+    _pendingCredentials = pending;
     return pending;
   }
 
@@ -105,11 +146,11 @@ class SessionController extends AsyncNotifier<AuthState> {
     try {
       await previous;
     } catch (_) {}
-    if (operation != _operation) return;
+    if (!ref.mounted || operation != _operation) return;
     await storage.clearToken();
     await ref.read(cookieTransportProvider).clear();
     if (ref.mounted) state = const AsyncData(Unauthenticated());
-    coordinator.enabled = true;
+    coordinator.enable();
     try {
       final session = await authenticate();
       if (operation != _operation) return;
@@ -118,6 +159,8 @@ class SessionController extends AsyncNotifier<AuthState> {
         await storage.clearToken();
         return;
       }
+      await ref.read(cookieTransportProvider).allowRestoration();
+      if (!ref.mounted || operation != _operation) return;
       if (ref.mounted) {
         state = AsyncData(
           Authenticated(user: session.user, generation: operation),
@@ -133,27 +176,59 @@ class SessionController extends AsyncNotifier<AuthState> {
     }
   }
 
-  Future<void> logout() async {
-    ++_operation;
+  Future<void> logout() {
+    final operation = ++_operation;
     final coordinator = ref.read(tokenRefreshCoordinatorProvider);
     coordinator.invalidate();
+    state = const AsyncData(Unauthenticated());
+    final pending = _performLogout(operation, _pendingCredentials);
+    return _trackCredentials(pending);
+  }
+
+  Future<void> _performLogout(int operation, Future<void>? previous) async {
+    final coordinator = ref.read(tokenRefreshCoordinatorProvider);
+    final repository = ref.read(authRepositoryProvider);
+    final cookies = ref.read(cookieTransportProvider);
+    final storage = ref.read(tokenStorageProvider);
+    Object? localFailure;
+    StackTrace? localStack;
+    Future<void> cleanup(Future<void> Function() action) async {
+      try {
+        await action();
+      } catch (error, stack) {
+        localFailure ??= error;
+        localStack ??= stack;
+      }
+    }
+
+    await cleanup(cookies.blockRestoration);
     await coordinator.drain();
     try {
-      await _pendingAuthentication;
+      await previous;
     } catch (_) {}
-    final storage = ref.read(tokenStorageProvider);
-    Object? failure;
+    await cleanup(cookies.blockRestoration);
+    String? notice;
     try {
-      await ref.read(authRepositoryProvider).logout();
+      await repository.logout();
     } catch (_) {
-      failure = const AuthRequestException(
-        'Logged out locally. Server revocation could not be confirmed.',
+      notice =
+          'Signed out in this app. Server revocation could not be confirmed. Sign in explicitly to reconnect.';
+    }
+    // Attempt every local cleanup even when one storage backend fails. Only the
+    // server can remove browser HttpOnly cookies; the local flag records intent.
+    await cleanup(storage.clearToken);
+    await cleanup(cookies.clear);
+    if (ref.mounted && operation == _operation) {
+      state = AsyncData(
+        Unauthenticated(
+          message: localFailure == null
+              ? notice
+              : 'Unable to clear all saved session data. Retry signing out before reloading.',
+        ),
       );
     }
-    await storage.clearToken();
-    await ref.read(cookieTransportProvider).clear();
-    if (ref.mounted) {
-      state = AsyncData(Unauthenticated(message: failure?.toString()));
+    if (localFailure != null) {
+      Error.throwWithStackTrace(localFailure!, localStack!);
     }
   }
 }

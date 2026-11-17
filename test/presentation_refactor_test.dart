@@ -1,3 +1,8 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
@@ -9,10 +14,6 @@ import 'package:assessment_project_fb_international_frontend/features/booking/co
 import 'package:assessment_project_fb_international_frontend/features/booking/view/booking_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/view/widgets/profile_edit_form.dart';
 import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'support/demo_container.dart';
 

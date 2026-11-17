@@ -1,5 +1,5 @@
-import 'auth_session.dart';
-import 'user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 abstract interface class AuthRepository {
   Future<String> refresh();

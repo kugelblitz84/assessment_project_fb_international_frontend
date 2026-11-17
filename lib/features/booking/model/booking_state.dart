@@ -1,5 +1,5 @@
-import '../../shared/model/appointment_model.dart';
-import '../../shared/model/availability_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
 
 enum BookingStep { schedule, review }
 
@@ -28,7 +28,11 @@ class BookingState {
   final AppointmentModel? created;
   TimeSlotModel? get selectedSlot {
     for (final slot in availability?.slots ?? const <TimeSlotModel>[]) {
-      if (slot.id == slotId && slot.available) return slot;
+      if (slot.id == slotId &&
+          slot.available &&
+          slot.startsAt.isAfter(DateTime.now())) {
+        return slot;
+      }
     }
     return null;
   }

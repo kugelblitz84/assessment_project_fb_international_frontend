@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_depth.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/performance_car_art.dart';
+import 'package:assessment_project_fb_international_frontend/app/widgets/performance_car_art.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_depth.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 
 class ExploreHero extends StatelessWidget {
   const ExploreHero({super.key, required this.onExplore});

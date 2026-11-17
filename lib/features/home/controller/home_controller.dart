@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../shared/controller/catalog_controller.dart';
-import '../../shared/model/service_model.dart';
-import '../model/home_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/model/service_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/model/home_state.dart';
 
 final homeControllerProvider = NotifierProvider<HomeController, HomeState>(
   HomeController.new,

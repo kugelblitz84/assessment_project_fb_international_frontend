@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/widgets/responsive/adaptive_layout.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../controller/assistant_controller.dart';
-import '../model/assistant_state.dart';
-import 'widgets/chat_composer.dart';
-import 'widgets/chat_message_list.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/responsive/adaptive_layout.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/view/widgets/chat_composer.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/view/widgets/chat_message_list.dart';
 
 class AiAssistantPage extends ConsumerStatefulWidget {
   const AiAssistantPage({super.key});

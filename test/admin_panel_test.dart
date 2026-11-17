@@ -1,5 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
@@ -8,21 +14,29 @@ import 'package:assessment_project_fb_international_frontend/core/session/applic
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/input_validation_exception.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/admin_appointment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/model/admin_appointment.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/admin_category_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/category_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/dashboard/controller/admin_dashboard_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_providers.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_models.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/model/selected_image.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/service/admin_image_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/admin_offer.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/offer_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/admin_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_validation.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/service/admin_repository.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_shell.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/catalog_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/appointment_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/profile/service/profile_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/model/update_profile_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/service/profile_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
 import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:image_picker/image_picker.dart';
+
 import 'support/admin_fakes.dart';
 import 'support/session_fakes.dart';
 
@@ -63,14 +77,13 @@ void main() {
       await container.read(sessionProvider.future);
       final previous =
           container.read(sessionProvider).requireValue as Authenticated;
-      final user = await ProfileService(container.read(dioProvider), null)
-          .update(
-            adminUser.id,
-            const UpdateProfilePayload(
-              name: 'Updated administrator',
-              email: 'updated@example.test',
-            ),
-          );
+      final user = await ProfileService(container.read(dioProvider)).update(
+        adminUser.id,
+        const UpdateProfilePayload(
+          name: 'Updated administrator',
+          email: 'updated@example.test',
+        ),
+      );
       container.read(sessionProvider.notifier).updateUser(user);
       final current =
           container.read(sessionProvider).requireValue as Authenticated;
@@ -103,14 +116,14 @@ void main() {
     expect(AdminValidation.integer('1.5'), isNotNull);
     final items = [const PackageItem(serviceId: serviceId, quantity: 2)];
     expect(items.single.toJson(), {'serviceId': serviceId, 'quantity': 2});
-    expect(AdminValidation.packageItems(items, {serviceId}), isNull);
+    expect(ServiceValidation.packageItems(items, {serviceId}), isNull);
     expect(
-      AdminValidation.packageItems([...items, ...items], {serviceId}),
+      ServiceValidation.packageItems([...items, ...items], {serviceId}),
       isNotNull,
     );
-    expect(AdminValidation.packageItems(items, {packageId}), isNotNull);
+    expect(ServiceValidation.packageItems(items, {packageId}), isNotNull);
     expect(
-      AdminValidation.packageItems(
+      ServiceValidation.packageItems(
         [const PackageItem(serviceId: serviceId, quantity: 0)],
         {serviceId},
       ),
@@ -125,14 +138,14 @@ void main() {
       expect(start.toIso8601String(), '2026-11-16T18:30:00.000Z');
       expect(WorkshopTime.input(start), '2026-11-17 00:30');
       expect(WorkshopTime.parse('2026-02-30 09:00'), isNull);
-      expect(AdminValidation.offer('PERCENTAGE', '100', start, end), isNull);
+      expect(OfferValidation.offer('PERCENTAGE', '100', start, end), isNull);
       expect(
-        AdminValidation.offer('PERCENTAGE', '100.01', start, end),
+        OfferValidation.offer('PERCENTAGE', '100.01', start, end),
         isNotNull,
       );
-      expect(AdminValidation.offer('FIXED_AMOUNT', '0', start, end), isNotNull);
+      expect(OfferValidation.offer('FIXED_AMOUNT', '0', start, end), isNotNull);
       expect(
-        AdminValidation.offer('FIXED_AMOUNT', '10', end, start),
+        OfferValidation.offer('FIXED_AMOUNT', '10', end, start),
         isNotNull,
       );
       final offer = AdminOffer.fromJson(offerJson);
@@ -187,8 +200,8 @@ void main() {
       await container.read(sessionProvider.future);
       final bytes = Uint8List.fromList([0xff, 0xd8, 0xff, 0xd9]);
       final url = await container
-          .read(adminRepositoryProvider)
-          .upload(bytes, 'wash.jpg');
+          .read(adminImageServiceProvider)
+          .upload(SelectedImage(bytes, 'wash.jpg'));
       expect(url, startsWith('https://'));
       final request = adapter.requests.last;
       expect(request.path, ApiEndpoints.adminImages);
@@ -198,15 +211,12 @@ void main() {
       expect(body, contains('filename="wash.jpg"'));
       expect(body, contains('image/jpeg'));
       expect(
-        () => AdminRepository.imageRequest(
-          Uint8List(2 * 1024 * 1024 + 1),
-          'huge.png',
-        ),
-        throwsFormatException,
+        () => SelectedImage(Uint8List(2 * 1024 * 1024 + 1), 'huge.png'),
+        throwsA(isA<InputValidationException>()),
       );
       expect(
-        () => AdminRepository.imageRequest(bytes, 'file.svg'),
-        throwsFormatException,
+        () => SelectedImage(bytes, 'file.svg'),
+        throwsA(isA<InputValidationException>()),
       );
     },
   );
@@ -225,7 +235,10 @@ void main() {
         (_, _) {},
       );
       final catalog = container.listen(catalogControllerProvider, (_, _) {});
-      final mutation = container.listen(adminMutationProvider, (_, _) {});
+      final mutation = container.listen(
+        adminCategoryMutationProvider,
+        (_, _) {},
+      );
       addTearDown(() {
         dashboard.close();
         categories.close();
@@ -241,14 +254,12 @@ void main() {
       await container.read(catalogControllerProvider.future);
       final oldCatalog = container.read(catalogControllerProvider.future);
       adapter.mutationGate = Completer<void>();
-      final controller = container.read(adminMutationProvider.notifier);
-      final first = controller.save(ApiEndpoints.adminCategories, {
-        'name': 'New',
-      });
+      final controller = container.read(adminCategoryMutationProvider.notifier);
+      final first = controller.save(const CategoryPayload(name: 'New'));
       await adapter.mutationStarted.future;
-      final second = await controller.save(ApiEndpoints.adminCategories, {
-        'name': 'Duplicate',
-      });
+      final second = await controller.save(
+        const CategoryPayload(name: 'Duplicate'),
+      );
       expect(second.success, isFalse);
       adapter.mutationGate!.complete();
       expect((await first).success, isTrue);
@@ -293,7 +304,7 @@ void main() {
       )),
       (_, _) {},
     );
-    container.listen(adminMutationProvider, (_, _) {});
+    container.listen(adminAppointmentMutationProvider, (_, _) {});
     await container.read(
       adminAppointmentProvider((
         owner: container.read(adminOwnerProvider),
@@ -302,8 +313,8 @@ void main() {
     );
     adapter.mutationStatus = 409;
     final result = await container
-        .read(adminMutationProvider.notifier)
-        .transition(appointmentId, 'confirmed');
+        .read(adminAppointmentMutationProvider.notifier)
+        .transition(appointmentId, BookingStatus.confirmed);
     expect(result.errorCode, 'CONFLICT');
     expect(
       (await container.read(
@@ -550,8 +561,8 @@ void main() {
       adapter.mutationStatus = 413;
       final result = await ApiErrorHandler.run(
         () => container
-            .read(adminRepositoryProvider)
-            .upload(Uint8List.fromList([1, 2, 3]), 'small.png'),
+            .read(adminImageServiceProvider)
+            .upload(SelectedImage(Uint8List.fromList([1, 2, 3]), 'small.png')),
       );
       expect(result.errorCode, 'IMAGE_TOO_LARGE');
     },

@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/app_surface.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/session/application/current_user_provider.dart';
-import '../../../core/session/application/session_controller.dart';
-import '../../../core/session/domain/auth_state.dart';
-import '../../../core/theme/app_colors.dart';
-import 'widgets/profile_header.dart';
-import '../controller/logout_controller.dart';
-import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../routes/app_routes.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/logout_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_button.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/view/widgets/profile_header.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class ProfilePage extends ConsumerWidget {
   const ProfilePage({super.key});

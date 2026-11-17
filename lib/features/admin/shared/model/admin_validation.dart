@@ -1,5 +1,3 @@
-import 'admin_models.dart';
-
 abstract final class AdminValidation {
   static String? name(String? value) =>
       value == null || value.trim().isEmpty || value.trim().length > 200
@@ -26,46 +24,5 @@ abstract final class AdminValidation {
     return number == null || number < min || number > max
         ? 'Enter a whole number from $min to $max.'
         : null;
-  }
-
-  static String? inclusions(List<String> values) =>
-      values.length > 100 ||
-          values.any((v) => v.trim().isEmpty || v.trim().length > 1000)
-      ? 'Use up to 100 nonempty inclusions, each at most 1,000 characters.'
-      : null;
-  static String? packageItems(
-    List<PackageItem> items,
-    Set<String> individualIds,
-  ) =>
-      items.isEmpty ||
-          items.length > 100 ||
-          items.map((i) => i.serviceId).toSet().length != items.length ||
-          items.any(
-            (i) =>
-                !individualIds.contains(i.serviceId) ||
-                i.quantity < 1 ||
-                i.quantity > 1000,
-          )
-      ? 'Select 1–100 unique individual services with quantities from 1 to 1,000.'
-      : null;
-  static String? offer(
-    String type,
-    String value,
-    DateTime? start,
-    DateTime? end,
-  ) {
-    if (money(value) != null || num.parse(value) <= 0) {
-      return 'Enter a positive discount with at most 2 decimals.';
-    }
-    if (!{'PERCENTAGE', 'FIXED_AMOUNT'}.contains(type)) {
-      return 'Choose a discount type.';
-    }
-    if (type == 'PERCENTAGE' && num.parse(value) > 100) {
-      return 'Percentage must be at most 100.';
-    }
-    if (start == null || end == null || !end.isAfter(start)) {
-      return 'Enter valid dates with the end after the start.';
-    }
-    return null;
   }
 }

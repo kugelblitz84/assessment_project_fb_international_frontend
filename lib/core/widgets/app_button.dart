@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 
 class AppButton extends StatelessWidget {
   const AppButton({

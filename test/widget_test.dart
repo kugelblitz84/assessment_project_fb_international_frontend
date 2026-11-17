@@ -1,20 +1,22 @@
-import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/app.dart';
+import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_overrides.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/view/booking_page.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
-import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
 import 'package:assessment_project_fb_international_frontend/routes/route_access_policy.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
 
 import 'support/session_fakes.dart';
 
@@ -25,6 +27,7 @@ void main() {
 
   ProviderContainer createContainer() => ProviderContainer.test(
     overrides: [
+      ...demoServiceOverrides(),
       demoModeProvider.overrideWithValue(true),
       tokenStorageProvider.overrideWithValue(storage),
       authRepositoryProvider.overrideWithValue(repository),

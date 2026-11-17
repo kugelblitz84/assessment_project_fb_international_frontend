@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/widgets/app_surface.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../../shared/view/appointment_info.dart';
-import '../../model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/view/widgets/appointment_info.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 
 class BookingReviewSection extends StatelessWidget {
   const BookingReviewSection({
@@ -40,7 +40,7 @@ class BookingReviewSection extends StatelessWidget {
           ],
           if (draft.availabilityError != null) ...[
             InlineNotice(
-              message: ApiErrorHandler.messageFor(draft.availabilityError),
+              message: AppErrorMessages.messageFor(draft.availabilityError),
               error: true,
             ),
             TextButton.icon(

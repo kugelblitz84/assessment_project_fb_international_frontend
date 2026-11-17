@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_spacing.dart';
-import '../network/api_error_handler.dart';
-import '../theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
 
 class StateMessage extends StatelessWidget {
   const StateMessage({
@@ -65,21 +65,26 @@ class StateMessage extends StatelessWidget {
 }
 
 class ErrorState extends StatelessWidget {
-  const ErrorState({super.key, this.code, required this.onRetry});
+  const ErrorState({super.key, this.code, this.message, required this.onRetry});
   final String? code;
+  final String? message;
   final VoidCallback onRetry;
 
   @override
-  Widget build(BuildContext context) => StateMessage(
-    title: code == 'NOT_FOUND' ? 'We couldn’t find that' : 'Unable to load',
-    message: ApiErrorHandler.messageFor(code),
-    icon: Icons.cloud_off_outlined,
-    action: OutlinedButton.icon(
-      onPressed: onRetry,
-      icon: const Icon(Icons.refresh),
-      label: const Text('Try again'),
-    ),
-  );
+  Widget build(BuildContext context) => code == 'CANCELLED'
+      ? const SizedBox.shrink()
+      : StateMessage(
+          title: code == 'NOT_FOUND'
+              ? 'We couldn’t find that'
+              : 'Unable to load',
+          message: message ?? ApiErrorMessages.messageFor(code),
+          icon: Icons.cloud_off_outlined,
+          action: OutlinedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Try again'),
+          ),
+        );
 }
 
 class LoadingState extends StatelessWidget {
@@ -109,32 +114,36 @@ class InlineNotice extends StatelessWidget {
   final String message;
   final bool error;
   @override
-  Widget build(BuildContext context) => Semantics(
-    liveRegion: true,
-    child: Container(
-      width: double.infinity,
-      padding: AppSize.inset(16),
-      decoration: BoxDecoration(
-        color: error ? AppColors.errorSoft : AppColors.primarySoft,
-        borderRadius: BorderRadius.circular(AppSize.radius(12)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            error ? Icons.error_outline : Icons.info_outline,
-            size: AppSize.icon(20),
-            color: error ? AppColors.error : AppColors.primary,
-          ),
-          SizedBox(width: AppSize.horizontal(10)),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(color: error ? AppColors.error : AppColors.text),
+  Widget build(BuildContext context) => message.isEmpty
+      ? const SizedBox.shrink()
+      : Semantics(
+          liveRegion: true,
+          child: Container(
+            width: double.infinity,
+            padding: AppSize.inset(16),
+            decoration: BoxDecoration(
+              color: error ? AppColors.errorSoft : AppColors.primarySoft,
+              borderRadius: BorderRadius.circular(AppSize.radius(12)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  error ? Icons.error_outline : Icons.info_outline,
+                  size: AppSize.icon(20),
+                  color: error ? AppColors.error : AppColors.primary,
+                ),
+                SizedBox(width: AppSize.horizontal(10)),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: error ? AppColors.error : AppColors.text,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    ),
-  );
+        );
 }

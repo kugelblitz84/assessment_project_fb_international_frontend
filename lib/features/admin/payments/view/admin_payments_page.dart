@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../payments/model/payment_models.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/payments/controller/admin_payment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
 
 class AdminPaymentsPage extends ConsumerStatefulWidget {
   const AdminPaymentsPage({super.key});

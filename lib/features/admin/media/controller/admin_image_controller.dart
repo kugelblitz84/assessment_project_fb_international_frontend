@@ -1,29 +1,18 @@
-import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../../../../core/network/dio_provider.dart';
-import '../../../../core/session/application/session_identity_provider.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/service/admin_repository.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/model/admin_image_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/model/selected_image.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/service/admin_image_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 
 final adminImagePickerProvider = Provider<Future<XFile?> Function()>(
   (ref) =>
       () => ImagePicker().pickImage(source: ImageSource.gallery),
 );
-
-class AdminImageState {
-  const AdminImageState({
-    this.url,
-    this.bytes,
-    this.name,
-    this.busy = false,
-    this.errorCode,
-  });
-  final String? url, name, errorCode;
-  final Uint8List? bytes;
-  final bool busy;
-}
 
 typedef AdminImageKey = ({Object owner, String? initialUrl});
 
@@ -54,7 +43,9 @@ class AdminImageController extends Notifier<AdminImageState> {
         state = AdminImageState(url: previousUrl);
         return;
       }
-      if (await file.length() > AdminRepository.maxImageBytes) {
+      final size = await file.length();
+      if (!ref.mounted || identity != ref.read(sessionIdentityProvider)) return;
+      if (size > SelectedImage.maxBytes) {
         if (ref.mounted) {
           state = AdminImageState(
             url: previousUrl,
@@ -66,15 +57,15 @@ class AdminImageController extends Notifier<AdminImageState> {
       final bytes = await file.readAsBytes();
       if (!ref.mounted || identity != ref.read(sessionIdentityProvider)) return;
       // Validate before making a request; byte signatures are checked by the backend.
-      AdminRepository.imageRequest(bytes, file.name);
+      SelectedImage(bytes, file.name);
       state = AdminImageState(url: previousUrl, bytes: bytes, name: file.name);
       await upload();
-    } catch (_) {
+    } catch (error, stack) {
+      final failure = await ApiErrorHandler.run<void>(() async {
+        Error.throwWithStackTrace(error, stack);
+      });
       if (ref.mounted && identity == ref.read(sessionIdentityProvider)) {
-        state = AdminImageState(
-          url: previousUrl,
-          errorCode: 'VALIDATION_ERROR',
-        );
+        state = AdminImageState(url: previousUrl, errorCode: failure.errorCode);
       }
     }
   }
@@ -95,13 +86,14 @@ class AdminImageController extends Notifier<AdminImageState> {
     );
     final result = await ApiErrorHandler.run(
       () => ref
-          .read(adminRepositoryProvider)
-          .upload(current.bytes!, current.name!),
+          .read(adminImageServiceProvider)
+          .upload(SelectedImage(current.bytes!, current.name!)),
     );
     if (!ref.mounted || identity != ref.read(sessionIdentityProvider)) return;
     // Multipart bodies are never automatically replayed. Renew once, then let
     // the administrator explicitly retry with a newly constructed FormData.
-    if (result.errorCode == 'UNAUTHORIZED') {
+    if (result.errorCode == 'UNAUTHORIZED' ||
+        result.errorCode == 'SESSION_EXPIRED') {
       await ApiErrorHandler.run(
         () => ref.read(tokenRefreshCoordinatorProvider).refresh(),
       );

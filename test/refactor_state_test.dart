@@ -1,12 +1,23 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/logout_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_auth.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_services.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_workshop.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/create_booking_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';
@@ -15,21 +26,11 @@ import 'package:assessment_project_fb_international_frontend/features/auth/contr
 import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_form_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
-import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/controller/my_bookings_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/controller/profile_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/profile/controller/logout_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/model/update_profile_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/appointments_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/availability_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/appointment_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/create_booking_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/appointment_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/demo_workshop.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
 
 import 'support/demo_container.dart';
 import 'support/session_fakes.dart';
@@ -247,7 +248,7 @@ void main() {
       expect(container.read(provider).requireValue.step, BookingStep.review);
       expect(
         container.read(provider).requireValue.availabilityError,
-        'TIMEOUT',
+        'RECEIVE_TIMEOUT',
       );
       expect(container.read(provider).requireValue.canContinue, isFalse);
       service.gate = null;
@@ -355,8 +356,8 @@ void main() {
   }
 }
 
-class DelayedAssistant extends AssistantService {
-  DelayedAssistant(super.dio, super.demo);
+class DelayedAssistant extends DemoAssistantService {
+  DelayedAssistant(super.dio, super.workshop);
   final started = Completer<void>();
   final reply = Completer<AssistantMessageModel>();
   @override
@@ -366,8 +367,8 @@ class DelayedAssistant extends AssistantService {
   }
 }
 
-class DelayedAvailability extends BookingService {
-  DelayedAvailability(super.dio, super.demo);
+class DelayedAvailability extends DemoBookingService {
+  DelayedAvailability(super.dio, super.workshop);
   Completer<AvailabilityModel>? gate;
   int calls = 0;
   @override
@@ -402,9 +403,9 @@ class CountingAuthRepository extends StubAuthRepository {
   }
 }
 
-class DelayedAppointments extends AppointmentService {
-  DelayedAppointments(super.dio, super.demo)
-    : items = demo!.appointments('demo-driver');
+class DelayedAppointments extends DemoAppointmentService {
+  DelayedAppointments(super.dio, super.workshop)
+    : items = workshop.appointments('demo-driver');
   List<AppointmentModel> items;
   Completer<List<AppointmentModel>>? gate;
   @override

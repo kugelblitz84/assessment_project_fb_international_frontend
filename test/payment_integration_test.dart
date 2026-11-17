@@ -1,28 +1,33 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:assessment_project_fb_international_frontend/app.dart';
-import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:assessment_project_fb_international_frontend/core/config/platform_config.dart';
-import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:assessment_project_fb_international_frontend/app.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_providers.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/payments/controller/admin_payment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/controller/payment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/controller/reconciliation_gate.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_summary.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/service/payment_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/payment_summary.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/appointment_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/controller/appointments_controller.dart';
-import 'package:dio/dio.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'support/demo_container.dart';
-import 'support/admin_fakes.dart' as admin;
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/platform_config.dart';
+import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
+
 import 'live_booking_integration_test.dart' show appointmentJson, appointmentId;
+import 'support/admin_fakes.dart' as admin;
+import 'support/demo_container.dart';
 
 Map<String, dynamic> attemptJson({
   String status = 'pending',
@@ -149,38 +154,16 @@ void main() {
       }
     },
   );
-  test(
-    'cold-start readiness coalesces callers, caches success and permits manual recovery',
-    () async {
-      var calls = 0;
-      final gate = Completer<void>();
-      final readiness = BackendReadiness(() async {
-        calls++;
-        await gate.future;
-      });
-      final pending = List.generate(5, (_) => readiness.ensure());
-      expect(calls, 1);
-      expect(readiness.value, Readiness.connecting);
-      gate.complete();
-      await Future.wait(pending);
-      await readiness.ensure();
-      expect(calls, 1);
-      readiness.unavailable();
-      await readiness.ensure();
-      expect(calls, 2);
-      readiness.dispose();
-      var fails = true;
-      final recovery = BackendReadiness(() async {
-        if (fails) throw Exception();
-      });
-      await expectLater(recovery.ensure(), throwsException);
-      expect(recovery.value, Readiness.failed);
-      fails = false;
-      await recovery.ensure();
-      expect(recovery.value, Readiness.ready);
-      recovery.dispose();
-    },
-  );
+  test('direct requests reach transport without a health preflight', () async {
+    final container = demoContainer(demoData: false);
+    await container.read(sessionProvider.future);
+    final adapter = PaymentAdapter();
+    container.read(dioProvider).httpClientAdapter = adapter;
+    await container.read(paymentServiceProvider).config();
+    expect(adapter.requests.map((request) => request.path), [
+      '/payments/config',
+    ]);
+  });
   test('payment config keeps workshop enabled when gateway disabled', () {
     final config = PaymentConfig.fromJson({
       'onlinePaymentEnabled': false,
@@ -245,15 +228,25 @@ void main() {
     expect(CheckoutContact.validate('postcode', 'a' * 31), isNotNull);
   });
   test(
-    'a mutation queued behind readiness is rejected after session ownership changes',
+    'a queued mutation is rejected after session ownership changes',
     () async {
       final gate = Completer<void>();
-      final readiness = BackendReadiness(() => gate.future);
-      addTearDown(readiness.dispose);
-      final container = demoContainer(demoData: false, readiness: readiness);
+      final container = demoContainer(demoData: false);
       await container.read(sessionProvider.future);
       final adapter = PaymentAdapter();
-      container.read(dioProvider).httpClientAdapter = adapter;
+      final started = Completer<void>();
+      final dio = container.read(dioProvider);
+      dio.httpClientAdapter = adapter;
+      dio.interceptors.insert(
+        1,
+        InterceptorsWrapper(
+          onRequest: (options, handler) async {
+            started.complete();
+            await gate.future;
+            handler.next(options);
+          },
+        ),
+      );
       final result = ApiErrorHandler.run(
         () => container
             .read(dioProvider)
@@ -262,9 +255,7 @@ void main() {
               data: {'serviceId': 'service', 'slotId': 'slot'},
             ),
       );
-      while (readiness.value != Readiness.connecting) {
-        await Future<void>.delayed(Duration.zero);
-      }
+      await started.future;
       await container.read(sessionProvider.notifier).logout();
       gate.complete();
       expect((await result).success, false);
@@ -529,7 +520,7 @@ void main() {
           ),
         );
         expect(result.errorCode, code);
-        expect(ApiErrorHandler.messageFor(code), isNot(contains('secret')));
+        expect(AppErrorMessages.messageFor(code), isNot(contains('secret')));
       }
     },
   );

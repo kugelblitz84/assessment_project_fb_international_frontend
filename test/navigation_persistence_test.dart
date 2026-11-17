@@ -1,23 +1,24 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/app.dart';
-import 'package:assessment_project_fb_international_frontend/core/widgets/navigation/main_navigation_shell.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/main_navigation_shell.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_services.dart';
+import 'package:assessment_project_fb_international_frontend/demo/demo_workshop.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/view/ai_assistant_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
-import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/controller/my_bookings_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/view/my_bookings_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/home_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/profile/view/profile_page.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/model/availability_model.dart';
-import 'package:assessment_project_fb_international_frontend/features/shared/service/demo_workshop.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
 import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_test/flutter_test.dart';
 
 import 'support/demo_container.dart';
 
@@ -380,8 +381,8 @@ void main() {
   );
 }
 
-class CountingAvailability extends BookingService {
-  CountingAvailability(super.dio, super.demo);
+class CountingAvailability extends DemoBookingService {
+  CountingAvailability(super.dio, super.workshop);
   int calls = 0;
   bool failNext = false;
   @override

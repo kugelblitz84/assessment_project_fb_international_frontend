@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/config/demo_mode.dart';
-import '../../shared/model/appointment_model.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
 
 class PaymentActions extends ConsumerWidget {
   const PaymentActions({super.key, required this.appointment});

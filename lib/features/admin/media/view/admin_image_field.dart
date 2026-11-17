@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../controller/admin_image_controller.dart';
+
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
 
 class AdminImageField extends ConsumerWidget {
   const AdminImageField({
@@ -48,7 +49,7 @@ class AdminImageField extends ConsumerWidget {
           ),
         if (state.errorCode != null)
           Text(
-            '${ApiErrorHandler.messageFor(state.errorCode)} Previous saved image is retained.',
+            '${AppErrorMessages.messageFor(state.errorCode)} Previous saved image is retained.',
             style: TextStyle(color: Theme.of(context).colorScheme.error),
           ),
         Wrap(

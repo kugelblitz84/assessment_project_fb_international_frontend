@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/session_controller.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/session/domain/auth_state.dart';
-import '../../../core/utils/validators.dart';
-import '../model/profile_state.dart';
-import '../model/update_profile_payload.dart';
-import '../service/profile_service.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/validators.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/model/profile_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/model/update_profile_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/service/profile_service.dart';
 
 final profileControllerProvider =
     NotifierProvider.autoDispose<ProfileController, ProfileState>(

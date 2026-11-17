@@ -1,3 +1,5 @@
+import 'package:assessment_project_fb_international_frontend/core/utils/input_validation_exception.dart';
+
 typedef PaymentJson = Map<String, dynamic>;
 
 class PaymentConfig {
@@ -144,7 +146,7 @@ class CheckoutContact {
     };
     for (final entry in json.entries) {
       if (validate(entry.key, entry.value) != null) {
-        throw const FormatException('Invalid checkout contact.');
+        throw const InputValidationException();
       }
     }
     return json;

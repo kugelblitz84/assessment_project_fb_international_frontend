@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../../../routes/app_routes.dart';
-import '../../controller/booking_controller.dart';
-import '../../model/booking_state.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_button.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class BookingActionButton extends ConsumerWidget {
   const BookingActionButton({super.key, required this.serviceId});

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import 'category_filter_section.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/category_filter_section.dart';
 
 class ServiceFilterSheet extends StatelessWidget {
   const ServiceFilterSheet({super.key});

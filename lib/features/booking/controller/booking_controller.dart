@@ -1,28 +1,27 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/config/platform_config.dart';
-import '../../../core/session/application/session_controller.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/session/domain/auth_state.dart';
-import '../../shared/controller/appointments_controller.dart';
-import '../../shared/model/create_booking_payload.dart';
-import '../../shared/service/appointment_service.dart';
-import '../model/booking_state.dart';
-import '../service/booking_service.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/create_booking_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/controller/platform_config_provider.dart';
 
 final bookingControllerProvider = AsyncNotifierProvider.autoDispose
-    .family<BookingController, BookingState, String>(BookingController.new);
+    .family<BookingController, BookingState, String>(
+      BookingController.new,
+      retry: (_, _) => null,
+    );
 
 class BookingController extends AsyncNotifier<BookingState> {
   BookingController(this.serviceId);
   final String serviceId;
   int _request = 0;
-  DateTime? _configLoadedAt;
   bool get configurationFresh =>
-      _configLoadedAt != null &&
-      DateTime.now().difference(_configLoadedAt!) <
-          const Duration(minutes: 5) &&
       ref.read(platformConfigProvider).asData?.value.fresh == true;
   DateTime get firstBookableDate => ref.read(bookingServiceProvider).today;
   DateTime get lastBookableDate =>
@@ -45,7 +44,6 @@ class BookingController extends AsyncNotifier<BookingState> {
         'Workshop configuration expired. Retry loading booking settings.',
       );
     }
-    _configLoadedAt = DateTime.now();
     final result = await ApiErrorHandler.run(
       () => service.getAvailability(serviceId, date),
     );
@@ -204,7 +202,14 @@ class BookingController extends AsyncNotifier<BookingState> {
       return;
     }
     final uncertain =
-        result.errorCode == 'TIMEOUT' ||
+        const {
+          'TIMEOUT',
+          'CONNECTION_TIMEOUT',
+          'SEND_TIMEOUT',
+          'RECEIVE_TIMEOUT',
+          'CANCELLED',
+          'BACKEND_UNAVAILABLE',
+        }.contains(result.errorCode) ||
         result.errorCode == 'NETWORK_ERROR' ||
         result.errorCode == 'SERVER_ERROR' ||
         result.errorCode == 'INVALID_RESPONSE' ||

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'session_controller.dart';
 
-import '../domain/auth_state.dart';
-import '../domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 final currentUserProvider = Provider<UserEntity?>((ref) {
   final session = ref.watch(sessionProvider);

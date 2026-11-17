@@ -1,18 +1,21 @@
-import '../domain/token_storage.dart';
-import '../domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/token_storage.dart';
 
 class TokenRefreshCoordinator {
-  TokenRefreshCoordinator(this.storage, this.renew, this.clearCookies);
-  final TokenStorage storage;
-  final Future<String> Function() renew;
-  final Future<void> Function() clearCookies;
+  TokenRefreshCoordinator(this._storage, this._renew, this._clearCookies);
+  final TokenStorage _storage;
+  final Future<String> Function() _renew;
+  final Future<void> Function() _clearCookies;
   Future<String>? _pending;
-  int generation = 0;
-  bool enabled = true;
+  int _generation = 0;
+  bool _enabled = true;
+  int get generation => _generation;
+  bool get enabled => _enabled;
+  void enable() => _enabled = true;
   void Function()? onInvalidSession;
   void invalidate() {
-    generation++;
-    enabled = false;
+    _generation++;
+    _enabled = false;
   }
 
   Future<void> drain() async {
@@ -24,7 +27,7 @@ class TokenRefreshCoordinator {
   Future<String> refresh({String? failedToken}) async {
     if (!enabled) throw const InvalidSessionException();
     final epoch = generation;
-    final current = await storage.readToken();
+    final current = await _storage.readToken();
     if (epoch != generation) throw const InvalidSessionException();
     if (failedToken != null && current != null && current != failedToken) {
       return current;
@@ -41,20 +44,26 @@ class TokenRefreshCoordinator {
 
   Future<String> _perform(int epoch) async {
     try {
-      final token = await renew();
+      final token = await _renew();
       if (epoch != generation) throw const InvalidSessionException();
-      await storage.saveToken(token);
+      await _storage.saveToken(token);
       if (epoch != generation) {
-        await storage.clearToken();
+        await _storage.clearToken();
         throw const InvalidSessionException();
       }
       return token;
     } on InvalidSessionException {
       if (epoch == generation) {
         invalidate();
-        await storage.clearToken();
-        await clearCookies();
-        onInvalidSession?.call();
+        try {
+          await _storage.clearToken();
+        } finally {
+          try {
+            await _clearCookies();
+          } finally {
+            onInvalidSession?.call();
+          }
+        }
       }
       rethrow;
     }

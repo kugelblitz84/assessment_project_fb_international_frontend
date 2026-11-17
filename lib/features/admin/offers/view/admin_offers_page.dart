@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../routes/app_routes.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/controller/admin_offer_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminOffersPage extends ConsumerWidget {
   const AdminOffersPage({super.key});
@@ -76,7 +78,7 @@ class AdminOffersPage extends ConsumerWidget {
                           child: const Text('Edit'),
                         ),
                         TextButton(
-                          onPressed: ref.watch(adminMutationProvider)
+                          onPressed: ref.watch(adminOfferMutationProvider)
                               ? null
                               : () async {
                                   if (!await adminConfirm(
@@ -88,10 +90,8 @@ class AdminOffersPage extends ConsumerWidget {
                                     return;
                                   }
                                   final result = await ref
-                                      .read(adminMutationProvider.notifier)
-                                      .save(ApiEndpoints.adminOffers, {
-                                        'isActive': !item.isActive,
-                                      }, id: item.id);
+                                      .read(adminOfferMutationProvider.notifier)
+                                      .setActive(item.id, !item.isActive);
                                   if (context.mounted) {
                                     adminNotice(context, result);
                                   }

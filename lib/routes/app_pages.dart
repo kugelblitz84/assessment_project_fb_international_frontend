@@ -1,34 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/widgets/navigation/not_found_page.dart';
-import '../core/session/application/session_identity_provider.dart';
-import '../core/widgets/navigation/main_navigation_shell.dart';
-import '../core/widgets/navigation/navigation_shell_scope.dart';
-import '../features/assistant/view/ai_assistant_page.dart';
-import '../features/auth/view/login_page.dart';
-import '../features/auth/view/register_page.dart';
-import '../features/booking/view/booking_confirmation_page.dart';
-import '../features/booking/view/booking_page.dart';
-import '../features/bookings/view/booking_details_page.dart';
-import '../features/bookings/view/my_bookings_page.dart';
-import '../features/home/view/home_page.dart';
-import '../features/profile/view/edit_profile_page.dart';
-import '../features/profile/view/profile_page.dart';
-import '../features/services/view/service_details_page.dart';
-import '../features/admin/shared/view/admin_shell.dart';
-import '../features/admin/dashboard/view/admin_dashboard_page.dart';
-import '../features/admin/categories/view/admin_categories_page.dart';
-import '../features/admin/categories/view/admin_category_form.dart';
-import '../features/admin/services/view/admin_services_page.dart';
-import '../features/admin/services/view/admin_service_form.dart';
-import '../features/admin/offers/view/admin_offers_page.dart';
-import '../features/admin/offers/view/admin_offer_form.dart';
-import '../features/admin/appointments/view/admin_appointments_page.dart';
-import '../features/admin/appointments/view/admin_appointment_details.dart';
-import 'app_routes.dart';
-import '../features/payments/view/payment_page.dart';
-import '../features/admin/payments/view/admin_payments_page.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/main_navigation_shell.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/navigation_shell_scope.dart';
+import 'package:assessment_project_fb_international_frontend/app/widgets/not_found_page.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/view/admin_appointment_details.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/view/admin_appointments_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/view/admin_categories_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/view/admin_category_form.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/dashboard/view/admin_dashboard_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/view/admin_offer_form.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/view/admin_offers_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/payments/view/admin_payments_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/view/admin_service_form.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/view/admin_services_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_shell.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/view/ai_assistant_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/view/login_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/view/register_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/booking_confirmation_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/view/booking_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/view/booking_details_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/view/my_bookings_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/view/service_details_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/home_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/view/payment_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/view/edit_profile_page.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/view/profile_page.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 /// New shell/branch keys discard mounted private state on ownership changes.
 List<RouteBase> createAppPages(
@@ -189,6 +189,7 @@ List<RouteBase> createAppPages(
               builder: (_, state) => HomePage(
                 categoryId: state.uri.queryParameters['category'],
                 resetFilters: state.uri.queryParameters['browse'] == 'all',
+                browseIntent: state.uri.queryParameters['intent'],
               ),
             ),
           ],

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_button.dart';
-import '../../model/update_profile_payload.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/validators.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_button.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/model/update_profile_payload.dart';
 
 class ProfileEditForm extends StatefulWidget {
   const ProfileEditForm({

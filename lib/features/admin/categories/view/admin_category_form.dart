@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../routes/app_routes.dart';
-import '../../media/controller/admin_image_controller.dart';
-import '../../media/view/admin_image_field.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/model/admin_validation.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/admin_category_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/admin_category.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/category_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/media/view/admin_image_field.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminCategoryFormPage extends ConsumerWidget {
   const AdminCategoryFormPage({super.key, this.id});
@@ -76,33 +78,28 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
     final image = ref.read(adminImageProvider(imageKey));
     if (image.busy) return;
     final result = await ref
-        .read(adminMutationProvider.notifier)
-        .save(ApiEndpoints.adminCategories, {
-          'name': name.text.trim(),
-          if (slug.text.isNotEmpty) 'slug': slug.text,
-          'description': description.text,
-          'sortOrder': int.parse(order.text),
-          'isActive': active,
-          'imageUrl': image.url,
-        }, id: widget.item?.id);
+        .read(adminCategoryMutationProvider.notifier)
+        .save(
+          CategoryPayload(
+            name: name.text,
+            slug: slug.text,
+            description: description.text,
+            sortOrder: int.parse(order.text),
+            isActive: active,
+            imageUrl: image.url,
+          ),
+          id: widget.item?.id,
+        );
     if (!mounted) return;
     adminNotice(context, result, success: 'Category saved.');
     if (result.success) {
-      if (widget.item != null) {
-        ref.invalidate(
-          adminCategoryProvider((
-            owner: ref.read(adminOwnerProvider),
-            id: widget.item!.id,
-          )),
-        );
-      }
       context.go(AppRoutes.adminCategoriesPath);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminMutationProvider);
+    final busy = ref.watch(adminCategoryMutationProvider);
     final image = ref.watch(adminImageProvider(imageKey));
     return Form(
       key: form,

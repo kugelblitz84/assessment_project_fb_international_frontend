@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/network/api_error_handler.dart';
-import '../../../../core/widgets/async_state_view.dart';
-import '../../../../core/widgets/section_header.dart';
-import '../../../shared/controller/catalog_controller.dart';
-import '../../../shared/view/service_card.dart';
-import '../../controller/home_controller.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/section_header.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/view/widgets/service_card.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 
 class ServiceCatalogSection extends ConsumerWidget {
   const ServiceCatalogSection({super.key});
@@ -50,7 +50,7 @@ class ServiceCatalogSection extends ConsumerWidget {
                   if (data.errorCode != null) ...[
                     InlineNotice(
                       message:
-                          '${ApiErrorHandler.messageFor(data.errorCode)} Showing previously loaded services.',
+                          '${AppErrorMessages.messageFor(data.errorCode)} Showing previously loaded services.',
                       error: true,
                     ),
                     SizedBox(height: AppSize.vertical(16)),

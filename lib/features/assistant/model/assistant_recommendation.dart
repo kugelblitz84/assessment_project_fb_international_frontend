@@ -1,5 +1,5 @@
-import '../../shared/model/service_model.dart';
-import 'assistant_message_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/model/service_model.dart';
 
 class AssistantRecommendation {
   const AssistantRecommendation({required this.action, this.service});

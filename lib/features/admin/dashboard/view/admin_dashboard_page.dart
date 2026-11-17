@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../routes/app_routes.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/features/admin/dashboard/controller/admin_dashboard_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminDashboardPage extends ConsumerWidget {
   const AdminDashboardPage({super.key});
@@ -33,15 +35,15 @@ class AdminDashboardPage extends ConsumerWidget {
             spacing: 16,
             runSpacing: 16,
             children: [
-              for (final (key, label) in const [
-                ('totalServices', 'Services'),
-                ('activeServices', 'Active services'),
-                ('totalCategories', 'Categories'),
-                ('totalPackages', 'Packages'),
-                ('activeOffers', 'Active offers'),
-                ('pendingAppointments', 'Pending appointments'),
-                ('confirmedAppointments', 'Confirmed appointments'),
-                ('completedAppointments', 'Completed appointments'),
+              for (final (count, label) in [
+                (data.totalServices, 'Services'),
+                (data.activeServices, 'Active services'),
+                (data.totalCategories, 'Categories'),
+                (data.totalPackages, 'Packages'),
+                (data.activeOffers, 'Active offers'),
+                (data.pendingAppointments, 'Pending appointments'),
+                (data.confirmedAppointments, 'Confirmed appointments'),
+                (data.completedAppointments, 'Completed appointments'),
               ])
                 SizedBox(
                   width: constraints.maxWidth < 440
@@ -56,7 +58,7 @@ class AdminDashboardPage extends ConsumerWidget {
                           Text(label),
                           const SizedBox(height: 8),
                           Text(
-                            '${data[key]}',
+                            '$count',
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
                         ],

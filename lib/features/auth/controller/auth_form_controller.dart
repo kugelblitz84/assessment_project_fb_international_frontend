@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/session/application/session_controller.dart';
-import '../../../core/session/domain/session_exception.dart';
-import '../../../core/utils/validators.dart';
-import '../model/auth_form_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/validators.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_form_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_validation.dart';
 
 final authFormControllerProvider = NotifierProvider.autoDispose
     .family<AuthFormController, AuthFormState, AuthFormMode>(
@@ -24,10 +26,8 @@ class AuthFormController extends Notifier<AuthFormState> {
     if (state.submitting) return;
     final validation =
         Validators.email(email) ??
-        (password.isEmpty ? 'Enter your password.' : null) ??
-        (mode == AuthFormMode.register && (name == null || name.trim().isEmpty)
-            ? 'Enter your name.'
-            : null);
+        AuthValidation.password(password) ??
+        (mode == AuthFormMode.register ? AuthValidation.name(name) : null);
     if (validation != null) {
       state = AuthFormState(status: AuthFormStatus.failed, error: validation);
       return;
@@ -51,9 +51,7 @@ class AuthFormController extends Notifier<AuthFormState> {
       if (ref.mounted) {
         state = AuthFormState(
           status: AuthFormStatus.failed,
-          error: error is SessionException
-              ? error.message
-              : 'Unable to save your session securely. Please try again.',
+          error: ApiErrorMessages.messageFor(ApiErrorHandler.codeFor(error)),
         );
       }
     }

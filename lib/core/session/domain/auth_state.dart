@@ -1,4 +1,4 @@
-import './user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 sealed class AuthState {
   const AuthState();

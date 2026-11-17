@@ -1,7 +1,10 @@
 import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+
 import 'support/session_fakes.dart';
 
 void main() {

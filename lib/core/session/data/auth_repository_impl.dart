@@ -1,23 +1,30 @@
 import 'package:dio/dio.dart';
 
-import '../../network/api_endpoints.dart';
-import '../domain/auth_repository.dart';
-import '../domain/auth_session.dart';
-import '../domain/session_exception.dart';
-import '../domain/user_entity.dart';
-import 'user_model.dart';
-import '../application/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_repository.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
+import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  AuthRepositoryImpl(this._dio, {this.coordinator, this.transport});
-  final TokenRefreshCoordinator? coordinator;
-  final Dio? transport;
+  AuthRepositoryImpl(
+    this._dio, {
+    required TokenRefreshCoordinator coordinator,
+    required Dio transport,
+  }) : _coordinator = coordinator,
+       _transport = transport;
+  final TokenRefreshCoordinator _coordinator;
+  final Dio _transport;
   @override
-  Future<String> refresh() => coordinator!.refresh();
+  Future<String> refresh() => _coordinator.refresh();
   @override
   Future<void> logout() => _request(() async {
-    await (transport ?? _dio).post<Object?>(ApiEndpoints.logout);
-  });
+    await _transport.post<Object?>(ApiEndpoints.logout);
+  }, restoringSession: true);
 
   final Dio _dio;
 
@@ -87,16 +94,8 @@ class AuthRepositoryImpl implements AuthRepository {
       if (error.error is FormatException) {
         throw const InvalidAuthResponseException();
       }
-      final message = switch (error.response?.statusCode) {
-        400 || 422 => 'Please check the submitted details.',
-        403 => 'This request is not allowed.',
-        409 => 'An account with this email already exists.',
-        final int code when code >= 500 =>
-          'The server is unavailable. Please try again.',
-        _ => 'Unable to connect to AutoCare. Please try again.',
-      };
-      // Do not expose raw Dio errors: they can contain request credentials.
-      throw AuthRequestException(message);
+      final code = ApiErrorHandler.codeFor(error);
+      throw AuthRequestException(ApiErrorMessages.messageFor(code), code: code);
     } on FormatException {
       throw const InvalidAuthResponseException();
     }

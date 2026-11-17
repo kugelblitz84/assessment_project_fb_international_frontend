@@ -2,18 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/navigation/page_scaffold.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/current_user_provider.dart';
-import '../../../core/session/application/session_identity_provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/app_surface.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../routes/app_routes.dart';
-import '../controller/profile_controller.dart';
-import 'widgets/profile_edit_form.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/controller/profile_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/profile/view/widgets/profile_edit_form.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class EditProfilePage extends ConsumerWidget {
   const EditProfilePage({super.key});
@@ -68,7 +68,7 @@ class EditProfilePage extends ConsumerWidget {
                     error: state.errorCode == null
                         ? null
                         : InlineNotice(
-                            message: ApiErrorHandler.messageFor(
+                            message: AppErrorMessages.messageFor(
                               state.errorCode,
                             ),
                             error: true,

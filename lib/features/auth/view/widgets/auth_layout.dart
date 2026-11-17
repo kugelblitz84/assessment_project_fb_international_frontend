@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/widgets/app_surface.dart';
-import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/widgets/navigation/auto_care_brand.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../routes/app_routes.dart';
+import 'package:assessment_project_fb_international_frontend/app/widgets/auto_care_brand.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AuthLayout extends StatelessWidget {
   const AuthLayout({

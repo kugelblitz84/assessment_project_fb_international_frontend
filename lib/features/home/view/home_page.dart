@@ -2,24 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/app_surface.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../routes/app_routes.dart';
-import '../../shared/controller/catalog_controller.dart';
-import '../controller/home_controller.dart';
-import 'widgets/category_filter_section.dart';
-import 'widgets/explore_hero.dart';
-import 'widgets/home_header.dart';
-import 'widgets/service_search_bar.dart';
-import 'widgets/service_catalog_section.dart';
-import 'widgets/service_filter_sheet.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/category_filter_section.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/explore_hero.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/home_header.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/service_catalog_section.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/service_filter_sheet.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/service_search_bar.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class HomePage extends ConsumerStatefulWidget {
-  const HomePage({super.key, this.categoryId, this.resetFilters = false});
+  const HomePage({
+    super.key,
+    this.categoryId,
+    this.resetFilters = false,
+    this.browseIntent,
+  });
   final String? categoryId;
   final bool resetFilters;
+  final String? browseIntent;
   @override
   ConsumerState<HomePage> createState() => _HomePageState();
 }
@@ -51,7 +57,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void didUpdateWidget(covariant HomePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.categoryId != widget.categoryId ||
-        oldWidget.resetFilters != widget.resetFilters) {
+        oldWidget.resetFilters != widget.resetFilters ||
+        oldWidget.browseIntent != widget.browseIntent) {
       _applyRouteFilters();
     }
   }

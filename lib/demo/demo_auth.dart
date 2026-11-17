@@ -1,9 +1,10 @@
 import 'package:dio/dio.dart';
-import '../core/network/cookie_transport.dart';
-import '../core/session/domain/auth_repository.dart';
-import '../core/session/domain/auth_session.dart';
-import '../core/session/domain/token_storage.dart';
-import '../core/session/domain/user_entity.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/network/cookie_transport.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_repository.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/token_storage.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 
 /// These adapters are wired ONLY by main_demo.dart, never the normal app.
 class DemoTokenStorage implements TokenStorage {

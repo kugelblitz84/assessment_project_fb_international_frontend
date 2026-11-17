@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/widgets/app_surface.dart';
-import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/navigation/page_scaffold.dart';
-import '../../../core/network/api_error_handler.dart';
-import '../../../core/session/application/current_user_provider.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/async_state_view.dart';
-import '../../../core/widgets/page_container.dart';
-import '../../../routes/app_routes.dart';
-import '../../shared/controller/appointments_controller.dart';
-import '../../shared/view/appointment_info.dart';
-import '../../shared/view/booking_status_badge.dart';
-import '../../payments/view/payment_actions.dart';
+import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
+import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
+import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/view/widgets/appointment_info.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/view/widgets/booking_status_badge.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/view/payment_actions.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class BookingDetailsPage extends ConsumerWidget {
   const BookingDetailsPage({super.key, required this.bookingId});
@@ -112,7 +112,7 @@ class BookingDetailsPage extends ConsumerWidget {
                           if (data.errorCode != null) ...[
                             SizedBox(height: AppSize.vertical(16)),
                             InlineNotice(
-                              message: ApiErrorHandler.messageFor(
+                              message: AppErrorMessages.messageFor(
                                 data.errorCode,
                               ),
                               error: true,

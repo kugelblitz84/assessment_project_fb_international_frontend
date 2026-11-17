@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/network/api_endpoints.dart';
-import '../../../../routes/app_routes.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/admin_category_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
 class AdminCategoriesPage extends ConsumerWidget {
   const AdminCategoriesPage({super.key});
@@ -76,7 +77,8 @@ class AdminCategoriesPage extends ConsumerWidget {
                               child: const Text('Edit'),
                             ),
                             TextButton(
-                              onPressed: ref.watch(adminMutationProvider)
+                              onPressed:
+                                  ref.watch(adminCategoryMutationProvider)
                                   ? null
                                   : () async {
                                       if (!await adminConfirm(
@@ -88,10 +90,11 @@ class AdminCategoriesPage extends ConsumerWidget {
                                         return;
                                       }
                                       final result = await ref
-                                          .read(adminMutationProvider.notifier)
-                                          .save(ApiEndpoints.adminCategories, {
-                                            'isActive': !item.isActive,
-                                          }, id: item.id);
+                                          .read(
+                                            adminCategoryMutationProvider
+                                                .notifier,
+                                          )
+                                          .setActive(item.id, !item.isActive);
                                       if (context.mounted) {
                                         adminNotice(context, result);
                                       }

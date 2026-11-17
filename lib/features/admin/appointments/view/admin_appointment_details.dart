@@ -1,11 +1,14 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/utils/formatters.dart';
-import '../../../shared/model/appointment_model.dart';
-import '../../shared/controller/admin_providers.dart';
-import '../../shared/model/admin_models.dart';
-import '../../shared/view/admin_widgets.dart';
+
+import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/admin_appointment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
+import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
 
 class AdminAppointmentDetails extends ConsumerStatefulWidget {
   const AdminAppointmentDetails({super.key, required this.id});
@@ -82,7 +85,7 @@ class _AdminAppointmentDetailsState
             children: [
               for (final action in item.actionsAt(DateTime.now()))
                 FilledButton(
-                  onPressed: ref.watch(adminMutationProvider)
+                  onPressed: ref.watch(adminAppointmentMutationProvider)
                       ? null
                       : () async {
                           if (!await adminConfirm(
@@ -94,8 +97,8 @@ class _AdminAppointmentDetailsState
                             return;
                           }
                           final result = await ref
-                              .read(adminMutationProvider.notifier)
-                              .transition(item.id, action.name);
+                              .read(adminAppointmentMutationProvider.notifier)
+                              .transition(item.id, action);
                           if (context.mounted) {
                             adminNotice(
                               context,
