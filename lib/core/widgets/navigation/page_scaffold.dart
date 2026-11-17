@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../theme/app_spacing.dart';
 import '../../../routes/app_routes.dart';
 import '../../config/demo_mode.dart';
-import '../../responsive/adaptive_layout.dart';
+import '../responsive/adaptive_layout.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_depth.dart';
 import 'navigation_bars.dart';

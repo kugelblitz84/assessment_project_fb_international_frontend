@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/navigation/presentation/page_scaffold.dart';
+import '../../../core/widgets/navigation/page_scaffold.dart';
 import '../../../core/session/application/current_user_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/async_state_view.dart';

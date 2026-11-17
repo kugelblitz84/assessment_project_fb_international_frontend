@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../responsive/adaptive_layout.dart';
+import 'responsive/adaptive_layout.dart';
 import '../theme/app_spacing.dart';
 
 class PageContainer extends StatelessWidget {

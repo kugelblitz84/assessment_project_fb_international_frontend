@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/navigation/presentation/page_scaffold.dart';
-import '../../../core/responsive/adaptive_layout.dart';
+import '../../../core/widgets/navigation/page_scaffold.dart';
+import '../../../core/widgets/responsive/adaptive_layout.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/app_button.dart';

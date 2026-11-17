@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../responsive/adaptive_layout.dart';
+import '../responsive/adaptive_layout.dart';
 import 'auto_care_brand.dart';
 import 'navigation_bars.dart';
 import 'page_scaffold.dart';

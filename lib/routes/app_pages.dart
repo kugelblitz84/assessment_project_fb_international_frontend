@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/navigation/presentation/not_found_page.dart';
+import '../core/widgets/navigation/not_found_page.dart';
 import '../core/session/application/session_identity_provider.dart';
-import '../core/navigation/presentation/main_navigation_shell.dart';
-import '../core/navigation/presentation/navigation_shell_scope.dart';
+import '../core/widgets/navigation/main_navigation_shell.dart';
+import '../core/widgets/navigation/navigation_shell_scope.dart';
 import '../features/assistant/view/ai_assistant_page.dart';
 import '../features/auth/view/login_page.dart';
 import '../features/auth/view/register_page.dart';

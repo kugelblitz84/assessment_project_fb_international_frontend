@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
-import '../../../../core/navigation/presentation/auto_care_brand.dart';
+import '../../../../core/widgets/navigation/auto_care_brand.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/app_routes.dart';
 

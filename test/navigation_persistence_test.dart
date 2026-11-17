@@ -1,5 +1,5 @@
 import 'package:assessment_project_fb_international_frontend/app.dart';
-import 'package:assessment_project_fb_international_frontend/core/navigation/presentation/main_navigation_shell.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/navigation/main_navigation_shell.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/controller/assistant_controller.dart';

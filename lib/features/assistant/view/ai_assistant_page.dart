@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/responsive/adaptive_layout.dart';
+import '../../../core/widgets/responsive/adaptive_layout.dart';
 import '../../../core/session/application/session_identity_provider.dart';
 import '../controller/assistant_controller.dart';
 import '../model/assistant_state.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../routes/app_routes.dart';
-import '../../widgets/async_state_view.dart';
+import '../async_state_view.dart';
 
 class NotFoundPage extends StatelessWidget {
   const NotFoundPage({super.key});
