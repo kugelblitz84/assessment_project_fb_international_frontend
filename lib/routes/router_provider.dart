@@ -19,10 +19,25 @@ final routerProvider = Provider<GoRouter>((ref) {
     final path = state.uri.path;
     final isAuthPage =
         path == AppRoutes.loginPath || path == AppRoutes.registerPath;
-    final authenticated = session.asData?.value is Authenticated;
+    final auth = session.asData?.value;
+    final authenticated = auth is Authenticated;
+    final admin = auth is Authenticated && auth.user.isAdmin;
+    if (authenticated && RouteAccessPolicy.isAdminPath(path) && !admin) {
+      return AppRoutes.homePath;
+    }
+    if (admin && (isAuthPage || path == AppRoutes.homePath || path == '/')) {
+      final destination = RouteAccessPolicy.redirectDestination(state.uri);
+      return destination != null &&
+              RouteAccessPolicy.isAdminPath(Uri.parse(destination).path)
+          ? destination
+          : AppRoutes.adminPath;
+    }
     if (authenticated && isAuthPage) {
-      return RouteAccessPolicy.redirectDestination(state.uri) ??
-          AppRoutes.homePath;
+      final destination = RouteAccessPolicy.redirectDestination(state.uri);
+      return destination != null &&
+              !RouteAccessPolicy.isAdminPath(Uri.parse(destination).path)
+          ? destination
+          : AppRoutes.homePath;
     }
     if (!authenticated && RouteAccessPolicy.requiresAuthentication(path)) {
       return RouteAccessPolicy.location(
@@ -58,6 +73,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       (session) => (
         loading: session.isLoading,
         authenticated: session.asData?.value is Authenticated,
+        role: switch (session.asData?.value) {
+          Authenticated(:final user) => user.role,
+          _ => null,
+        },
       ),
     ),
     (previous, next) => refresh.refresh(),

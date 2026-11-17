@@ -1,4 +1,12 @@
 abstract final class AppRoutes {
+  static const adminPath = '/admin';
+  static const adminCategoriesPath = '/admin/categories';
+  static const adminServicesPath = '/admin/services';
+  static const adminPackagesPath = '/admin/packages';
+  static const adminOffersPath = '/admin/offers';
+  static const adminAppointmentsPath = '/admin/appointments';
+  static String adminEditLocation(String path, String id) =>
+      '$path/${Uri.encodeComponent(id)}/edit';
   static const login = 'login';
   static const loginPath = '/login';
   static const register = 'register';

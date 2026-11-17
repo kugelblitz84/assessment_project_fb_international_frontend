@@ -2,10 +2,13 @@ import 'app_routes.dart';
 
 /// Shared route classification and validation for all internal return locations.
 abstract final class RouteAccessPolicy {
+  static bool isAdminPath(String path) =>
+      path == AppRoutes.adminPath || path.startsWith('${AppRoutes.adminPath}/');
   static final _booking = RegExp(r'^/services/[^/]+/book$');
   static final _bookingDetails = RegExp(r'^/bookings/[^/]+(?:/confirmation)?$');
 
   static bool requiresAuthentication(String path) =>
+      isAdminPath(path) ||
       path == AppRoutes.myBookingsPath ||
       path == AppRoutes.editProfilePath ||
       _booking.hasMatch(path) ||

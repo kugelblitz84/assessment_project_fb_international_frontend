@@ -6,12 +6,19 @@ class UserModel extends UserEntity {
     required super.id,
     required super.name,
     required super.email,
+    super.role,
   });
-  UserModel copyWith({String? id, String? name, String? email}) {
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    UserRole? role,
+  }) {
     return UserModel(
       id: id ?? this.id,
       name: name ?? this.name,
       email: email ?? this.email,
+      role: role ?? this.role,
     );
   }
 
@@ -20,6 +27,7 @@ class UserModel extends UserEntity {
       id: _requiredString(json, 'id'),
       name: _requiredString(json, 'name'),
       email: _requiredString(json, 'email'),
+      role: json['role'] == 'ADMIN' ? UserRole.admin : UserRole.customer,
     );
   }
 

@@ -3,8 +3,9 @@
 Responsive Flutter car service booking UI, using Riverpod 3, GoRouter, Dio and
 feature-first model/view/controller/service modules. All customer screens are
 implemented. Authentication, catalog and the Gemini assistant use the live backend by default.
-Booking/profile business adapters still require their remaining HTTP integration.
-An explicit demo target retains in-memory sample data. No frontend dependencies were added.
+The admin panel and profile updates use the live backend. The customer booking
+adapter still requires its remaining HTTP integration. An explicit demo target
+retains in-memory sample data. Image selection uses the cross-platform image_picker plugin.
 
 ## Run locally
 
@@ -188,7 +189,7 @@ never logged or displayed.
 
 ## Backend contract and Gemini assistant
 
-The adjacent backend implements authentication, catalog, packages, offers, availability, appointments and a public Gemini assistant under `/api/v1`. The frontend now connects authentication, catalog and assistant calls. Its remaining booking/profile business adapters still require HTTP wiring; explicit demo mode preserves the complete offline UI.
+The adjacent backend implements authentication, catalog, packages, offers, availability, appointments and a public Gemini assistant under `/api/v1`. The frontend connects authentication, catalog, assistant, profile updates and administration. Its customer booking adapter still requires HTTP wiring; explicit demo mode preserves the complete offline UI.
 
 - Android: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1`.
 - Browser: `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000/api/v1`; allow the exact browser origin in backend CORS configuration.
@@ -203,7 +204,69 @@ Messages go to Google Gemini. Free-tier data may be used to improve products. Do
 Disabled/configuration errors, limits, quota exhaustion, timeout and invalid output use locally defined safe messages. Live model availability still requires a successful configured request; fake-provider tests do not establish it. Browser cookie behavior and native platform persistence also need deployment checks.
 
 
+## Admin panel
+
+Use the normal application entry point and the existing login form. Backend user
+responses with `role: ADMIN` open `/admin`; customer accounts retain the customer
+application. Admin session restoration validates the saved token through `/auth/me`.
+Missing or unknown roles grant customer access only. Customer registration cannot
+select a role, and customer accounts cannot open admin URLs.
+
+Create an administrator from the adjacent backend, after completing its database
+configuration and migrations:
+
+```sh
+cd ../backend_project
+npm run admin:create
+```
+
+The CLI prompts for name, email and password without displaying the password.
+It requires a new email and a password of 10–256 characters. It does not promote
+an existing customer. No administrator account or password is shipped in Flutter.
+
+Run the frontend from this directory:
+
+```sh
+flutter pub get
+# Android emulator
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
+# Web: configure backend CORS_ORIGINS for http://localhost:5173
+flutter run -d chrome --web-port=5173 --dart-define=API_BASE_URL=http://localhost:3000/api/v1
+```
+
+The backend must also set `PUBLIC_API_BASE_URL` to its externally reachable API
+base, including `/api/v1`, for image uploads. Flutter uses the returned absolute
+imageUrl unchanged. Choose an address reachable by the intended Android/web client;
+an emulator, physical device and browser may need different development URLs.
+
+Administration includes database dashboard counts, category create/edit/status,
+service search/category/status filters, service create/edit/status, packages built
+from individual service UUIDs and quantities, JPEG/PNG/WebP uploads up to 2 MB,
+offers, and appointment filters/details/status transitions. Desktop uses a sidebar;
+mobile and tablet use a drawer. Catalog items are deactivated rather than deleted.
+Offer and appointment dates use workshop time, Asia/Dhaka; offer payloads use UTC.
+Completion requires a confirmed appointment whose end time has passed. HTTP 409
+reloads appointment state. Errors use safe local messages, with no automatic 403
+retries. Upload failures preserve the previous image and allow an explicit retry.
+
+All admin requests share the existing Dio client and token-refresh coordination.
+The admin panel always uses backend APIs, including when DEMO_DATA is enabled;
+the offline demo target only creates customer sessions. Private admin queries are
+keyed by session identity and authorization, and auto-dispose after leaving scope.
+Mutations refresh affected admin/public catalog or appointment providers.
+
+See [admin implementation and verification](docs/admin_implementation.md) for the
+endpoint contract, changed files, test coverage and remaining deployment checks.
+
 ## Verification
+
+Latest admin implementation checks: 149 tests passed (four opt-in screenshot tests
+skipped), no analyzer issues, Android debug APK and web builds passed. Admin visual
+capture passed separately for mobile and desktop. All 161 Dart source/test files
+pass formatting. `dart format .` encounters a Windows path error inside generated
+Android build directories; `dart format lib test` succeeds. Live admin API verification
+remains pending because the local backend was unreachable. See the implementation
+report for the complete scope and limitations.
 
 Run `dart format lib test`, `flutter analyze`, and `flutter test`.
 Build the demo with `flutter build web -t lib/demo/main_demo.dart` or

@@ -16,6 +16,16 @@ import '../features/home/view/home_page.dart';
 import '../features/profile/view/edit_profile_page.dart';
 import '../features/profile/view/profile_page.dart';
 import '../features/services/view/service_details_page.dart';
+import '../features/admin/shared/view/admin_shell.dart';
+import '../features/admin/dashboard/view/admin_dashboard_page.dart';
+import '../features/admin/categories/view/admin_categories_page.dart';
+import '../features/admin/categories/view/admin_category_form.dart';
+import '../features/admin/services/view/admin_services_page.dart';
+import '../features/admin/services/view/admin_service_form.dart';
+import '../features/admin/offers/view/admin_offers_page.dart';
+import '../features/admin/offers/view/admin_offer_form.dart';
+import '../features/admin/appointments/view/admin_appointments_page.dart';
+import '../features/admin/appointments/view/admin_appointment_details.dart';
 import 'app_routes.dart';
 
 /// New shell/branch keys discard mounted private state on ownership changes.
@@ -29,6 +39,91 @@ List<RouteBase> createAppPages(
   Widget rootScreen(Widget child) =>
       NavigationShellScope(shellKey: shellKey, child: child);
   return [
+    ShellRoute(
+      builder: (_, state, child) => AdminShell(
+        key: ValueKey(identity),
+        path: state.uri.path,
+        child: child,
+      ),
+      routes: [
+        GoRoute(
+          path: AppRoutes.adminPath,
+          builder: (_, _) => const AdminDashboardPage(),
+        ),
+        GoRoute(
+          path: AppRoutes.adminCategoriesPath,
+          builder: (_, _) => const AdminCategoriesPage(),
+          routes: [
+            GoRoute(
+              path: 'new',
+              builder: (_, _) => const AdminCategoryFormPage(),
+            ),
+            GoRoute(
+              path: ':id/edit',
+              builder: (_, state) => AdminCategoryFormPage(
+                key: ValueKey(state.pathParameters['id']),
+                id: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+        for (final package in [false, true])
+          GoRoute(
+            path: package
+                ? AppRoutes.adminPackagesPath
+                : AppRoutes.adminServicesPath,
+            builder: (_, _) =>
+                AdminServicesPage(key: ValueKey(package), packages: package),
+            routes: [
+              GoRoute(
+                path: 'new',
+                builder: (_, _) => AdminServiceFormPage(
+                  key: ValueKey('new-$package'),
+                  package: package,
+                ),
+              ),
+              GoRoute(
+                path: ':id/edit',
+                builder: (_, state) => AdminServiceFormPage(
+                  key: ValueKey(state.pathParameters['id']),
+                  id: state.pathParameters['id']!,
+                  package: package,
+                ),
+              ),
+            ],
+          ),
+        GoRoute(
+          path: AppRoutes.adminOffersPath,
+          builder: (_, _) => const AdminOffersPage(),
+          routes: [
+            GoRoute(path: 'new', builder: (_, _) => const AdminOfferFormPage()),
+            GoRoute(
+              path: ':id/edit',
+              builder: (_, state) => AdminOfferFormPage(
+                key: ValueKey(state.pathParameters['id']),
+                id: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: AppRoutes.adminAppointmentsPath,
+          builder: (_, state) => AdminAppointmentsPage(
+            key: ValueKey(state.uri.queryParameters['status']),
+            initialStatus: state.uri.queryParameters['status'],
+          ),
+          routes: [
+            GoRoute(
+              path: ':id',
+              builder: (_, state) => AdminAppointmentDetails(
+                key: ValueKey(state.pathParameters['id']),
+                id: state.pathParameters['id']!,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
     GoRoute(
       name: AppRoutes.login,
       path: AppRoutes.loginPath,
