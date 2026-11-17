@@ -1,5 +1,8 @@
 # Admin implementation report
 
+Historical implementation notes. Current payment integration, hosted results and
+deployment readiness are recorded in [final integration report](final_integration_report.md).
+
 The existing Flutter app now has an independent administration shell at `/admin`,
 using its existing login, session controller, token storage, refresh coordinator,
 GoRouter and theme. Customer navigation remains in its existing shell.
@@ -110,15 +113,15 @@ and mocked transport tests are not evidence of live API integration.
 
 ## Remaining limits and deployment checks
 
-- The local backend health endpoint at port 3000 was unreachable during this work.
-  Live authenticated CRUD/upload, persistent cookies and native device/browser picker
-  behavior require a running backend and a provisioned admin account.
+- The deployed backend is available. Live administrator CRUD/upload and native
+  picker acceptance still require a dedicated provisioned test administrator;
+  see the [hosted checklist](live_testing_checklist.md).
 - Backend `PUBLIC_API_BASE_URL` must be reachable from the target client; CORS and
   secure browser cookies must be configured for the deployed frontend origin.
 - Lists are intentionally unpaginated, following the backend. Service search and
   category/status filtering are local. Offer dates use validated text input in
   `YYYY-MM-DD HH:mm` format. Workshop timezone is the backend's fixed Asia/Dhaka.
-- Existing customer booking HTTP adapters remain outside this admin implementation;
-  their existing offline demonstration and customer regression tests are preserved.
-- No administrator registration, user management, payments, rescheduling,
+- Customer booking HTTP integration and admin payments are now implemented;
+  current verification is recorded in the final report linked above.
+- No administrator registration, user management, refunds, rescheduling,
   notifications, analytics charts or unrelated customer redesign was added.

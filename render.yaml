@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: autocare-frontend
+    runtime: static
+    branch: master
+    buildCommand: bash scripts/render-build.sh
+    staticPublishPath: build/web
+    autoDeployTrigger: commit
+    envVars:
+      - key: API_BASE_URL
+        value: https://fb-international-assessment-project.onrender.com/api/v1
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
