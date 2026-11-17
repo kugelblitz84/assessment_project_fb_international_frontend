@@ -18,7 +18,8 @@ class MyBookingsPage extends ConsumerWidget {
     final bookings = ref.watch(appointmentsControllerProvider);
     final tab = ref.watch(myBookingsTabProvider);
     final items = ref.watch(visibleAppointmentsProvider);
-    final refresh = ref.read(appointmentsControllerProvider.notifier).refresh;
+    final controller = ref.watch(appointmentsControllerProvider.notifier);
+    final refresh = controller.refresh;
     Widget box(Widget child) => SliverToBoxAdapter(child: child);
     return RefreshIndicator(
       onRefresh: refresh,

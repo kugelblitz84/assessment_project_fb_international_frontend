@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/session/application/current_user_provider.dart';
 import '../../../core/session/application/session_controller.dart';
@@ -19,6 +20,7 @@ class ProfilePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final logout = ref.watch(logoutControllerProvider);
+    final logoutController = ref.watch(logoutControllerProvider.notifier);
     final user = ref.watch(currentUserProvider);
     final session = ref.watch(sessionProvider);
     return SingleChildScrollView(
@@ -45,7 +47,7 @@ class ProfilePage extends ConsumerWidget {
                     : () => context.pushNamed(AppRoutes.editProfile),
               ),
               SizedBox(height: AppSize.vertical(20)),
-              Card(
+              AppSurface(
                 child: Column(
                   children: [
                     ListTile(
@@ -87,7 +89,7 @@ class ProfilePage extends ConsumerWidget {
                 label: logout.loading ? 'Logging out…' : 'Log out',
                 icon: Icons.logout,
                 loading: logout.loading,
-                onPressed: ref.read(logoutControllerProvider.notifier).logout,
+                onPressed: logoutController.logout,
               ),
             ] else ...[
               if (session.asData?.value case Unauthenticated(
@@ -96,7 +98,7 @@ class ProfilePage extends ConsumerWidget {
                 InlineNotice(message: message),
                 SizedBox(height: AppSize.vertical(16)),
               ],
-              Card(
+              AppSurface(
                 child: Padding(
                   padding: AppSize.cardPadding,
                   child: Column(

@@ -32,7 +32,7 @@ class BookingStatusBadge extends StatelessWidget {
         'Completed',
         Icons.task_alt,
         AppColors.secondary,
-        const Color(0xFFEEF2F6),
+        AppColors.surfaceRecessed,
       ),
     };
     return Semantics(

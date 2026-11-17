@@ -6,6 +6,7 @@ import '../../../routes/app_routes.dart';
 import '../../config/demo_mode.dart';
 import '../../responsive/adaptive_layout.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_depth.dart';
 import 'navigation_bars.dart';
 import 'navigation_shell_scope.dart';
 
@@ -63,11 +64,14 @@ class AppPageScaffold extends StatelessWidget {
       body: DemoPageBody(child: body),
       bottomNavigationBar: bottomBar == null
           ? null
-          : SafeArea(
-              top: false,
-              child: Material(
-                color: Colors.white,
-                child: Padding(padding: AppSize.inset(16), child: bottomBar),
+          : DecoratedBox(
+              decoration: const BoxDecoration(boxShadow: AppDepth.floating),
+              child: SafeArea(
+                top: false,
+                child: Material(
+                  color: AppColors.surface,
+                  child: Padding(padding: AppSize.inset(16), child: bottomBar),
+                ),
               ),
             ),
     );
@@ -87,7 +91,7 @@ class DemoPageBody extends ConsumerWidget {
             MediaQuery.viewInsetsOf(context).bottom == 0)
           Container(
             width: double.infinity,
-            color: AppColors.pendingSoft,
+            color: AppColors.surfaceRecessed,
             padding: EdgeInsets.symmetric(
               horizontal: AppSize.horizontal(16),
               vertical: AppSize.vertical(5),
@@ -97,7 +101,7 @@ class DemoPageBody extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: AppSize.font(12),
-                color: AppColors.pending,
+                color: AppColors.secondary,
               ),
             ),
           ),

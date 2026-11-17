@@ -220,6 +220,9 @@ void main() {
       container.listen(provider, (_, _) {});
       await container.read(provider.future);
       final controller = container.read(provider.notifier);
+      await controller.selectDate(
+        DemoWorkshop.today.add(const Duration(days: 1)),
+      );
       final slot = container
           .read(provider)
           .requireValue

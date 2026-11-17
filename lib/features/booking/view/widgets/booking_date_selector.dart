@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -20,7 +21,7 @@ class BookingDateSelector extends StatelessWidget {
   final ValueChanged<String> onSlotSelected;
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AppSurface(
       child: Padding(
         padding: AppSize.inset(20),
         child: Column(

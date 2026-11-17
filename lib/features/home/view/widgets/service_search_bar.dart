@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_depth.dart';
 import '../../controller/home_controller.dart';
 
 class ServiceSearchBar extends ConsumerWidget {
@@ -16,6 +18,7 @@ class ServiceSearchBar extends ConsumerWidget {
   final VoidCallback onFilters;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final homeController = ref.watch(homeControllerProvider.notifier);
     final empty = ref.watch(
       homeControllerProvider.select((state) => state.query.isEmpty),
     );
@@ -26,7 +29,7 @@ class ServiceSearchBar extends ConsumerWidget {
           child: TextField(
             controller: controller,
             focusNode: focusNode,
-            onChanged: ref.read(homeControllerProvider.notifier).search,
+            onChanged: homeController.search,
             textInputAction: TextInputAction.search,
             decoration: InputDecoration(
               labelText: 'Search services',
@@ -36,8 +39,7 @@ class ServiceSearchBar extends ConsumerWidget {
                   ? null
                   : IconButton(
                       tooltip: 'Clear search',
-                      onPressed: () =>
-                          ref.read(homeControllerProvider.notifier).search(''),
+                      onPressed: () => homeController.search(''),
                       icon: const Icon(Icons.close),
                     ),
             ),
@@ -46,10 +48,20 @@ class ServiceSearchBar extends ConsumerWidget {
         SizedBox(width: AppSize.horizontal(8)),
         SizedBox(
           height: 60,
-          child: IconButton.outlined(
-            tooltip: 'Filter services',
-            onPressed: onFilters,
-            icon: const Icon(Icons.tune_rounded),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSize.radius(10)),
+              boxShadow: AppDepth.control,
+            ),
+            child: IconButton.outlined(
+              style: IconButton.styleFrom(
+                backgroundColor: AppColors.surface,
+                side: const BorderSide(color: AppColors.highlight),
+              ),
+              tooltip: 'Filter services',
+              onPressed: onFilters,
+              icon: const Icon(Icons.tune_rounded),
+            ),
           ),
         ),
       ],

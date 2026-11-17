@@ -1,112 +1,147 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_depth.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/performance_car_art.dart';
 
 class ExploreHero extends StatelessWidget {
   const ExploreHero({super.key, required this.onExplore});
   final VoidCallback onExplore;
+
   @override
-  Widget build(BuildContext context) => Container(
-    clipBehavior: Clip.antiAlias,
+  Widget build(BuildContext context) => DecoratedBox(
     decoration: BoxDecoration(
-      color: AppColors.navy,
-      borderRadius: BorderRadius.circular(AppSize.radius(20)),
+      borderRadius: AppSize.cardRadius,
+      boxShadow: AppDepth.raised,
     ),
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 750;
-        final text = Padding(
-          padding: EdgeInsets.all(wide ? 36 : 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'CAR CARE, MADE SIMPLE',
-                style: TextStyle(
-                  fontSize: AppSize.font(12),
-                  color: Color(0xFFF3BDAA),
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              SizedBox(height: AppSize.vertical(16)),
-              Text(
-                'Expert care.\nReady when you are.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: wide ? 38 : 28,
-                  height: 1.2,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -.6,
-                ),
-              ),
-              SizedBox(height: AppSize.vertical(16)),
-              const Text(
-                'From a fresh finish to everyday maintenance. Find your service and choose a time that works.',
-                style: TextStyle(color: Color(0xFFD5DFEB), height: 1.6),
-              ),
-              SizedBox(height: AppSize.vertical(24)),
-              FilledButton.icon(
-                onPressed: onExplore,
-                icon: const Icon(Icons.arrow_forward),
-                label: const Text('Explore services'),
-              ),
-            ],
-          ),
-        );
-        final art = ExcludeSemantics(
-          child: SizedBox(
-            height: wide ? 300 : 150,
-            child: Stack(
-              alignment: Alignment.center,
+    child: Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: AppSize.cardRadius,
+        border: Border.all(color: const Color(0xFF4A564B)),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF344036), AppColors.graphite, Color(0xFF18201B)],
+          stops: [0, .6, 1],
+        ),
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 750;
+          final copy = Padding(
+            padding: EdgeInsets.fromLTRB(
+              wide ? 36 : 24,
+              wide ? 32 : 26,
+              wide ? 16 : 24,
+              wide ? 32 : 8,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 240,
-                  height: 240,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: .12),
-                      width: 30,
+                Row(
+                  children: [
+                    Container(width: 18, height: 3, color: AppColors.accent),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        'CARE. TUNED TO YOU.',
+                        style: TextStyle(
+                          fontSize: AppSize.font(10),
+                          color: AppColors.accent,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 2,
+                        ),
+                      ),
                     ),
+                  ],
+                ),
+                SizedBox(height: AppSize.vertical(18)),
+                Text(
+                  'Every detail.\nA better drive.',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: AppColors.surface,
+                    fontSize: AppSize.font(wide ? 46 : 34),
                   ),
                 ),
-                Transform.rotate(
-                  angle: -.12,
-                  child: Icon(
-                    Icons.directions_car_filled_rounded,
-                    size: wide ? 240 : 150,
-                    color: const Color(0xFFE4EAF1),
-                  ),
+                SizedBox(height: AppSize.vertical(14)),
+                const Text(
+                  'From a fresh finish to everyday maintenance. Your next service, on your schedule.',
+                  style: TextStyle(color: Color(0xFFBCC7BB), height: 1.6),
                 ),
-                Positioned(
-                  bottom: wide ? 30 : 5,
-                  child: Container(
-                    width: 200,
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(AppSize.radius(20)),
-                    ),
+                SizedBox(height: AppSize.vertical(24)),
+                FilledButton(
+                  onPressed: onExplore,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.onAccent,
+                    shadowColor: Colors.black.withValues(alpha: .25),
+                  ),
+                  child: const Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 16,
+                    children: [
+                      Text('Explore services'),
+                      Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
-        );
-        return wide
-            ? Row(
+          );
+          final art = ExcludeSemantics(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(wide ? 0 : 12, 12, 12, 12),
+              child: Column(
                 children: [
-                  Expanded(flex: 3, child: text),
-                  Expanded(flex: 2, child: art),
+                  SizedBox(
+                    height: wide ? 224 : 110,
+                    width: double.infinity,
+                    child: const PerformanceCarArt(),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSize.horizontal(24),
+                      vertical: AppSize.vertical(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(color: Color(0xFF4A564B)),
+                        ),
+                        const SizedBox(width: 12),
+                        Flexible(
+                          flex: 2,
+                          child: Text(
+                            'PRECISION IN EVERY DETAIL',
+                            style: TextStyle(
+                              fontSize: AppSize.font(8),
+                              letterSpacing: 1.4,
+                              color: const Color(0xFF9BA998),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [text, art],
-              );
-      },
+              ),
+            ),
+          );
+          return wide
+              ? Row(
+                  children: [
+                    Expanded(child: copy),
+                    Expanded(child: art),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [copy, art],
+                );
+        },
+      ),
     ),
   );
 }

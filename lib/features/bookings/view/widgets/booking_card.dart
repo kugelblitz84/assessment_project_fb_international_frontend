@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
@@ -12,7 +13,7 @@ class BookingCard extends StatelessWidget {
   const BookingCard({super.key, required this.booking});
   final AppointmentModel booking;
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AppSurface(
     child: Padding(
       padding: AppSize.inset(20),
       child: Column(

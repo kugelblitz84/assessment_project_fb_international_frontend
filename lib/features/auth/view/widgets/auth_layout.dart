@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/navigation/presentation/auto_care_brand.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -31,7 +32,7 @@ class AuthLayout extends StatelessWidget {
               children: [
                 const Center(child: AutoCareBrand()),
                 SizedBox(height: AppSize.vertical(32)),
-                Card(
+                AppSurface(
                   child: Padding(
                     padding: AppSize.cardPadding,
                     child: Column(

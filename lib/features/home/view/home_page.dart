@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/page_container.dart';
@@ -13,6 +14,7 @@ import 'widgets/explore_hero.dart';
 import 'widgets/home_header.dart';
 import 'widgets/service_search_bar.dart';
 import 'widgets/service_catalog_section.dart';
+import 'widgets/service_filter_sheet.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key, this.categoryId, this.resetFilters = false});
@@ -61,38 +63,18 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  void _showFilters() => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
-    builder: (context) => SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: AppSize.cardPadding,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Filter services',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              SizedBox(height: AppSize.vertical(20)),
-              const CategoryFilterSection(),
-              SizedBox(height: AppSize.vertical(24)),
-              FilledButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Show services'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  void _exploreServices() {
+    Scrollable.ensureVisible(
+      _catalogueKey.currentContext!,
+      duration: const Duration(milliseconds: 300),
+      alignment: .05,
+    );
+    _searchFocus.requestFocus();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final catalogController = ref.watch(catalogControllerProvider.notifier);
     ref.listen(homeControllerProvider.select((state) => state.query), (
       previous,
       query,
@@ -105,7 +87,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       }
     });
     return RefreshIndicator(
-      onRefresh: ref.read(catalogControllerProvider.notifier).refresh,
+      onRefresh: catalogController.refresh,
       child: PageSliverScrollView(
         key: const PageStorageKey('home-scroll'),
         slivers: [
@@ -115,22 +97,13 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 const HomeHeader(),
                 SizedBox(height: AppSize.vertical(24)),
-                ExploreHero(
-                  onExplore: () {
-                    Scrollable.ensureVisible(
-                      _catalogueKey.currentContext!,
-                      duration: const Duration(milliseconds: 300),
-                      alignment: .05,
-                    );
-                    _searchFocus.requestFocus();
-                  },
-                ),
+                ExploreHero(onExplore: _exploreServices),
                 SizedBox(height: AppSize.vertical(32)),
                 ServiceSearchBar(
                   key: _catalogueKey,
                   controller: _search,
                   focusNode: _searchFocus,
-                  onFilters: _showFilters,
+                  onFilters: () => ServiceFilterSheet.show(context),
                 ),
                 SizedBox(height: AppSize.vertical(16)),
                 const CategoryFilterSection(),
@@ -142,7 +115,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: AppSize.vertical(32)),
-              child: Card(
+              child: AppSurface(
                 child: Padding(
                   padding: AppSize.cardPadding,
                   child: Column(

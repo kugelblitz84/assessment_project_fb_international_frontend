@@ -14,7 +14,7 @@ class PriceActionBar extends StatelessWidget {
         price,
         style: TextStyle(
           fontSize: AppSize.font(20),
-          color: AppColors.navy,
+          color: AppColors.graphite,
           fontWeight: FontWeight.w700,
         ),
       );

@@ -19,6 +19,7 @@ class ChatMessageList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(assistantControllerProvider);
+    final assistant = ref.watch(assistantControllerProvider.notifier);
     final recommendations = ref.watch(assistantRecommendationsProvider);
     if (state.messages.isEmpty) {
       return AssistantWelcomeSection(onPrompt: onPrompt);
@@ -55,16 +56,12 @@ class ChatMessageList extends ConsumerWidget {
               Wrap(
                 children: [
                   TextButton.icon(
-                    onPressed: ref
-                        .read(assistantControllerProvider.notifier)
-                        .retry,
+                    onPressed: assistant.retry,
                     icon: const Icon(Icons.refresh),
                     label: const Text('Retry message'),
                   ),
                   TextButton(
-                    onPressed: ref
-                        .read(assistantControllerProvider.notifier)
-                        .clear,
+                    onPressed: assistant.clear,
                     child: const Text('Start a new conversation'),
                   ),
                 ],

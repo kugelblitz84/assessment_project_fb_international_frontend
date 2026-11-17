@@ -18,11 +18,23 @@ class BookingStepIndicator extends StatelessWidget {
     spacing: 8,
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
-      CircleAvatar(
-        radius: AppSize.radius(15),
-        backgroundColor: active ? AppColors.primary : AppColors.border,
-        foregroundColor: active ? Colors.white : AppColors.secondary,
-        child: Text(number, style: TextStyle(fontSize: AppSize.font(13))),
+      Container(
+        padding: AppSize.inset(10),
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : AppColors.surfaceRecessed,
+          borderRadius: BorderRadius.circular(AppSize.radius(8)),
+          border: Border.all(
+            color: active ? AppColors.primary : AppColors.border,
+          ),
+        ),
+        child: Text(
+          number,
+          style: TextStyle(
+            fontSize: AppSize.font(13),
+            fontWeight: FontWeight.w700,
+            color: active ? AppColors.accent : AppColors.secondary,
+          ),
+        ),
       ),
       Text(
         label,

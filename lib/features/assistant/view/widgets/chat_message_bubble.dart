@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_depth.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../routes/app_routes.dart';
@@ -33,9 +34,12 @@ class ChatMessageBubble extends StatelessWidget {
         ),
         padding: AppSize.inset(18),
         decoration: BoxDecoration(
-          color: user ? AppColors.primarySoft : Colors.white,
+          color: user ? AppColors.primarySoft : AppColors.surface,
           borderRadius: AppSize.cardRadius,
-          border: user ? null : Border.all(color: AppColors.border),
+          border: Border.all(
+            color: user ? AppColors.border : AppColors.highlight,
+          ),
+          boxShadow: user ? null : AppDepth.control,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

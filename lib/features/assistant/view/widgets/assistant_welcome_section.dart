@@ -18,13 +18,17 @@ class AssistantWelcomeSection extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: CircleAvatar(
-              radius: AppSize.radius(30),
-              backgroundColor: AppColors.primarySoft,
+            child: Container(
+              padding: AppSize.inset(18),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppSize.radius(14)),
+                border: Border.all(color: const Color(0xFF53634E)),
+              ),
               child: Icon(
                 Icons.auto_awesome_outlined,
                 size: AppSize.icon(30),
-                color: AppColors.primary,
+                color: AppColors.accent,
               ),
             ),
           ),

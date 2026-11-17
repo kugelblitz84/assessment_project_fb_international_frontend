@@ -14,6 +14,8 @@ class ServiceCatalogSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final catalog = ref.watch(catalogControllerProvider);
+    final catalogController = ref.watch(catalogControllerProvider.notifier);
+    final homeController = ref.watch(homeControllerProvider.notifier);
     final visible = ref.watch(filteredServicesProvider);
     final filtered = ref.watch(
       homeControllerProvider.select((state) => state.filtered),
@@ -30,7 +32,7 @@ class ServiceCatalogSection extends ConsumerWidget {
           return box(
             ErrorState(
               code: data.errorCode,
-              onRetry: ref.read(catalogControllerProvider.notifier).refresh,
+              onRetry: catalogController.refresh,
             ),
           );
         }
@@ -61,18 +63,14 @@ class ServiceCatalogSection extends ConsumerWidget {
                         '${visible.length} ${visible.length == 1 ? 'service' : 'services'} to explore',
                     action: filtered
                         ? TextButton(
-                            onPressed: ref
-                                .read(homeControllerProvider.notifier)
-                                .clear,
+                            onPressed: homeController.clear,
                             child: const Text('Clear filters'),
                           )
                         : IconButton(
                             tooltip: 'Refresh services',
                             onPressed: data.refreshing
                                 ? null
-                                : ref
-                                      .read(catalogControllerProvider.notifier)
-                                      .refresh,
+                                : catalogController.refresh,
                             icon: const Icon(Icons.refresh),
                           ),
                   ),
@@ -86,7 +84,7 @@ class ServiceCatalogSection extends ConsumerWidget {
                   message: 'Try another search or choose a different category.',
                   icon: Icons.search_off,
                   action: OutlinedButton(
-                    onPressed: ref.read(homeControllerProvider.notifier).clear,
+                    onPressed: homeController.clear,
                     child: const Text('Clear filters'),
                   ),
                 ),

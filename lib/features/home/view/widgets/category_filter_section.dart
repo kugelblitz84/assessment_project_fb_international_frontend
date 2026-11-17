@@ -8,6 +8,7 @@ class CategoryFilterSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(serviceCategoriesProvider);
+    final controller = ref.watch(homeControllerProvider.notifier);
     final selected = ref.watch(
       homeControllerProvider.select((state) => state.categoryId),
     );
@@ -18,17 +19,14 @@ class CategoryFilterSection extends ConsumerWidget {
         ChoiceChip(
           label: const Text('All services'),
           selected: selected == null,
-          onSelected: (_) =>
-              ref.read(homeControllerProvider.notifier).category(null),
+          onSelected: (_) => controller.category(null),
         ),
         for (final category in categories.entries)
           ChoiceChip(
             key: ValueKey(category.key),
             label: Text(category.value),
             selected: selected == category.key,
-            onSelected: (_) => ref
-                .read(homeControllerProvider.notifier)
-                .category(category.key),
+            onSelected: (_) => controller.category(category.key),
           ),
       ],
     );

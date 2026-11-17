@@ -23,7 +23,12 @@ class ServiceDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final details = ref.watch(serviceDetailsProvider(serviceId));
-    final catalog = ref.watch(catalogControllerProvider).asData?.value;
+    final catalogController = ref.watch(catalogControllerProvider.notifier);
+    final catalogError = ref.watch(
+      catalogControllerProvider.select(
+        (catalog) => catalog.asData?.value.errorCode,
+      ),
+    );
     final service = details.asData?.value;
     final desktop = AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
     void book() => context.pushNamed(
@@ -53,9 +58,8 @@ class ServiceDetailsPage extends ConsumerWidget {
             data: (service) {
               if (service == null) {
                 return ErrorState(
-                  code: catalog?.errorCode ?? 'NOT_FOUND',
-                  onRetry: () =>
-                      ref.read(catalogControllerProvider.notifier).refresh(),
+                  code: catalogError ?? 'NOT_FOUND',
+                  onRetry: catalogController.refresh,
                 );
               }
               return Column(

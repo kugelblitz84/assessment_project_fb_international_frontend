@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/session/domain/user_entity.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -10,7 +11,7 @@ class ProfileHeader extends StatelessWidget {
   final UserEntity user;
   final VoidCallback? onEdit;
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AppSurface(
     child: Padding(
       padding: AppSize.cardPadding,
       child: Column(
@@ -18,15 +19,20 @@ class ProfileHeader extends StatelessWidget {
         children: [
           Align(
             alignment: Alignment.centerLeft,
-            child: CircleAvatar(
-              radius: AppSize.radius(32),
-              backgroundColor: AppColors.primarySoft,
-              foregroundColor: AppColors.primary,
+            child: Container(
+              padding: AppSize.inset(18),
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(AppSize.radius(14)),
+                border: Border.all(color: const Color(0xFF53634E)),
+              ),
               child: Text(
                 Formatters.initials(user.name),
                 style: TextStyle(
                   fontSize: AppSize.font(24),
                   fontWeight: FontWeight.w700,
+                  fontFamily: 'RobotoCondensed',
+                  color: AppColors.accent,
                 ),
               ),
             ),

@@ -11,7 +11,9 @@ class BookingActionButton extends ConsumerWidget {
   final String serviceId;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final draft = ref.watch(bookingControllerProvider(serviceId)).asData?.value;
+    final provider = bookingControllerProvider(serviceId);
+    final draft = ref.watch(provider).asData?.value;
+    final controller = ref.watch(provider.notifier);
     if (draft == null) return const SizedBox.shrink();
     if (draft.uncertain) {
       return AppButton(
@@ -19,7 +21,6 @@ class BookingActionButton extends ConsumerWidget {
         onPressed: () => context.goNamed(AppRoutes.myBookings),
       );
     }
-    final controller = ref.read(bookingControllerProvider(serviceId).notifier);
     return AppButton(
       label: draft.submitting
           ? 'Submitting booking…'

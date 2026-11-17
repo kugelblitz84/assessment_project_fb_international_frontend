@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/responsive/adaptive_layout.dart';
 import '../../../core/session/application/session_identity_provider.dart';
 import '../controller/assistant_controller.dart';
+import '../model/assistant_state.dart';
 import 'widgets/chat_composer.dart';
 import 'widgets/chat_message_list.dart';
 
@@ -26,37 +27,37 @@ class _AiAssistantPageState extends ConsumerState<AiAssistantPage> {
   }
 
   void _send([String? prompt]) {
-    final pending = ref
-        .read(assistantControllerProvider.notifier)
-        .send(prompt ?? _composer.text);
-    if (pending == null) return;
+    final assistant = ref.read(assistantControllerProvider.notifier);
+    if (assistant.send(prompt ?? _composer.text) == null) return;
     _composer.clear();
     _focus.requestFocus();
+  }
+
+  void _onConversationChanged(AssistantState? previous, AssistantState next) {
+    final nearBottom =
+        !_scroll.hasClients || _scroll.position.extentAfter < 140;
+    final changed =
+        next.messages.length != previous?.messages.length ||
+        next.sending != previous?.sending;
+    if (!nearBottom || !changed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // The indexed stack disables tickers for inactive branches.
+      if (mounted &&
+          TickerMode.getValuesNotifier(context).value.enabled &&
+          _scroll.hasClients) {
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+        );
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(sessionIdentityProvider, (_, _) => _composer.clear());
-    ref.listen(assistantControllerProvider, (previous, next) {
-      final nearBottom =
-          !_scroll.hasClients || _scroll.position.extentAfter < 140;
-      if (nearBottom &&
-          (next.messages.length != previous?.messages.length ||
-              next.sending != previous?.sending)) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          // The indexed stack disables tickers for inactive branches.
-          if (mounted &&
-              TickerMode.getValuesNotifier(context).value.enabled &&
-              _scroll.hasClients) {
-            _scroll.animateTo(
-              _scroll.position.maxScrollExtent,
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOut,
-            );
-          }
-        });
-      }
-    });
+    ref.listen(assistantControllerProvider, _onConversationChanged);
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(

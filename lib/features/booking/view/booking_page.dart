@@ -9,6 +9,8 @@ import '../../../core/responsive/adaptive_layout.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/async_state_view.dart';
+import '../../../core/widgets/app_resume_listener.dart';
+import '../../../core/session/application/session_identity_provider.dart';
 import '../../../core/widgets/page_container.dart';
 import '../../../core/widgets/price_action_bar.dart';
 import '../../../routes/app_routes.dart';
@@ -23,65 +25,60 @@ import 'widgets/booking_action_button.dart';
 import 'widgets/booking_review_section.dart';
 import 'widgets/booking_step_indicator.dart';
 
-class BookingPage extends ConsumerStatefulWidget {
+class BookingPage extends ConsumerWidget {
   const BookingPage({super.key, required this.serviceId});
   final String serviceId;
-  @override
-  ConsumerState<BookingPage> createState() => _BookingPageState();
-}
 
-class _BookingPageState extends ConsumerState<BookingPage>
-    with WidgetsBindingObserver {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
-    if (lifecycle != AppLifecycleState.resumed ||
-        ModalRoute.of(context)?.isCurrent != true) {
-      return;
-    }
-    ref
-        .read(bookingControllerProvider(widget.serviceId).notifier)
-        .refreshAvailability();
-  }
-
-  Future<void> _pickDate(BookingState draft) async {
-    final controller = ref.read(
-      bookingControllerProvider(widget.serviceId).notifier,
-    );
+  Future<void> _pickDate(
+    BuildContext context,
+    WidgetRef ref,
+    BookingState draft,
+  ) async {
+    final provider = bookingControllerProvider(serviceId);
+    final controller = ref.read(provider.notifier);
+    final identity = ref.read(sessionIdentityProvider);
     final today = controller.firstBookableDate;
-    final date = await showDatePicker(
-      context: context,
-      initialDate: draft.date.isBefore(today) ? today : draft.date,
-      firstDate: today,
-      lastDate: controller.lastBookableDate,
-      helpText: 'Choose appointment date',
-    );
-    if (date != null && mounted) {
-      ref
-          .read(bookingControllerProvider(widget.serviceId).notifier)
-          .selectDate(date);
+    var validDraft = true;
+    // Riverpod may reuse a notifier instance when its provider is invalidated.
+    final subscription = ref.listenManual(provider, (_, next) {
+      if (next.isLoading) validDraft = false;
+    });
+    try {
+      final date = await showDatePicker(
+        context: context,
+        initialDate: draft.date.isBefore(today) ? today : draft.date,
+        firstDate: today,
+        lastDate: controller.lastBookableDate,
+        helpText: 'Choose appointment date',
+      );
+      if (date == null || !context.mounted || !validDraft) return;
+      if (identity != ref.read(sessionIdentityProvider) ||
+          ModalRoute.of(context)?.isCurrent != true) {
+        return;
+      }
+      final currentController = ref.read(provider.notifier);
+      if (!identical(currentController, controller)) return;
+      currentController.selectDate(date);
+    } finally {
+      subscription.close();
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final serviceAsync = ref.watch(serviceDetailsProvider(widget.serviceId));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final serviceAsync = ref.watch(serviceDetailsProvider(serviceId));
     final service = serviceAsync.asData?.value;
-    final draftAsync = ref.watch(bookingControllerProvider(widget.serviceId));
+    final catalogError = ref.watch(
+      catalogControllerProvider.select(
+        (catalog) => catalog.asData?.value.errorCode,
+      ),
+    );
+    final provider = bookingControllerProvider(serviceId);
+    final draftAsync = ref.watch(provider);
+    final controller = ref.watch(provider.notifier);
     final draft = draftAsync.asData?.value;
     final desktop = AppBreakpoints.isDesktop(MediaQuery.sizeOf(context).width);
-    ref.listen(bookingControllerProvider(widget.serviceId), (previous, next) {
+    ref.listen(provider, (previous, next) {
       final created = next.asData?.value.created;
       if (created != null &&
           previous?.asData?.value.created?.id != created.id) {
@@ -91,157 +88,129 @@ class _BookingPageState extends ConsumerState<BookingPage>
         );
       }
     });
-    return AppPageScaffold(
-      title: 'Book appointment',
-      bottomBar: !desktop && draft != null && service != null
-          ? PriceActionBar(
-              price: Formatters.price(service.price, service.currency),
-              action: BookingActionButton(serviceId: widget.serviceId),
-            )
-          : null,
-      body: SingleChildScrollView(
-        child: PageContainer(
-          child: serviceAsync.isLoading
-              ? const LoadingState(label: 'Loading service…')
-              : service == null
-              ? ErrorState(
-                  code:
-                      ref
-                          .watch(catalogControllerProvider)
-                          .asData
-                          ?.value
-                          .errorCode ??
-                      'NOT_FOUND',
-                  onRetry: () => ref.invalidate(catalogControllerProvider),
-                )
-              : draftAsync.when(
-                  loading: () =>
-                      const LoadingState(label: 'Checking appointment times…'),
-                  error: (_, _) => ErrorState(
-                    onRetry: () => ref.invalidate(
-                      bookingControllerProvider(widget.serviceId),
+    return AppResumeListener(
+      onResume: controller.refreshAvailability,
+      child: AppPageScaffold(
+        title: 'Book appointment',
+        bottomBar: !desktop && draft != null && service != null
+            ? PriceActionBar(
+                price: Formatters.price(service.price, service.currency),
+                action: BookingActionButton(serviceId: serviceId),
+              )
+            : null,
+        body: SingleChildScrollView(
+          child: PageContainer(
+            child: serviceAsync.isLoading
+                ? const LoadingState(label: 'Loading service…')
+                : service == null
+                ? ErrorState(
+                    code: catalogError ?? 'NOT_FOUND',
+                    onRetry: () => ref.invalidate(catalogControllerProvider),
+                  )
+                : draftAsync.when(
+                    loading: () => const LoadingState(
+                      label: 'Checking appointment times…',
                     ),
-                  ),
-                  data: (draft) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Book appointment',
-                        style: Theme.of(context).textTheme.headlineMedium,
-                      ),
-                      SizedBox(height: AppSize.vertical(8)),
-                      Text(
-                        service.name,
-                        style: const TextStyle(color: AppColors.secondary),
-                      ),
-                      SizedBox(height: AppSize.vertical(24)),
-                      Semantics(
-                        label:
-                            '${draft.step.index + 1} of 2: ${draft.step == BookingStep.schedule ? 'Schedule' : 'Review and book'}',
-                        child: ExcludeSemantics(
-                          child: Wrap(
-                            spacing: 12,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                    error: (_, _) =>
+                        ErrorState(onRetry: () => ref.invalidate(provider)),
+                    data: (draft) => Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Book appointment',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        SizedBox(height: AppSize.vertical(8)),
+                        Text(
+                          service.name,
+                          style: const TextStyle(color: AppColors.secondary),
+                        ),
+                        SizedBox(height: AppSize.vertical(24)),
+                        Semantics(
+                          label:
+                              '${draft.step.index + 1} of 2: ${draft.step == BookingStep.schedule ? 'Schedule' : 'Review and book'}',
+                          child: ExcludeSemantics(
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                BookingStepIndicator(
+                                  number: '1',
+                                  label: 'Schedule',
+                                  active: draft.step == BookingStep.schedule,
+                                ),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  size: AppSize.icon(18),
+                                  color: AppColors.secondary,
+                                ),
+                                BookingStepIndicator(
+                                  number: '2',
+                                  label: 'Review & book',
+                                  active: draft.step == BookingStep.review,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: AppSize.vertical(24)),
+                        if (draft.errorCode != null) ...[
+                          InlineNotice(
+                            message: draft.uncertain
+                                ? 'We could not confirm whether your request was received. Check My Bookings before making another request.'
+                                : ApiErrorHandler.messageFor(draft.errorCode),
+                            error: true,
+                          ),
+                          SizedBox(height: AppSize.vertical(20)),
+                        ],
+                        AdaptiveColumns(
+                          main: draft.step == BookingStep.schedule
+                              ? BookingDateSelector(
+                                  draft: draft,
+                                  onPickDate: () =>
+                                      _pickDate(context, ref, draft),
+                                  onRefresh: controller.refreshAvailability,
+                                  onSlotSelected: controller.selectSlot,
+                                )
+                              : BookingReviewSection(
+                                  draft: draft,
+                                  onRefresh: controller.refreshAvailability,
+                                  onEdit: controller.edit,
+                                ),
+                          aside: ServicePriceSummary(
+                            service: service,
+                            action: desktop
+                                ? BookingActionButton(serviceId: serviceId)
+                                : null,
                             children: [
-                              BookingStepIndicator(
-                                number: '1',
-                                label: 'Schedule',
-                                active: draft.step == BookingStep.schedule,
+                              DetailLine(
+                                label: 'Date',
+                                value: Formatters.date(draft.date),
                               ),
-                              Icon(
-                                Icons.arrow_forward,
-                                size: AppSize.icon(18),
-                                color: AppColors.secondary,
+                              DetailLine(
+                                label: 'Time',
+                                value: draft.selectedSlot == null
+                                    ? 'Choose an available time'
+                                    : Formatters.time(
+                                        draft.selectedSlot!.workshopTime,
+                                      ),
                               ),
-                              BookingStepIndicator(
-                                number: '2',
-                                label: 'Review & book',
-                                active: draft.step == BookingStep.review,
-                              ),
+                              if (draft.availability != null)
+                                Text(
+                                  draft.availability!.timeZone,
+                                  style: TextStyle(
+                                    fontSize: AppSize.font(12),
+                                    color: AppColors.secondary,
+                                  ),
+                                ),
                             ],
                           ),
                         ),
-                      ),
-                      SizedBox(height: AppSize.vertical(24)),
-                      if (draft.errorCode != null) ...[
-                        InlineNotice(
-                          message: draft.uncertain
-                              ? 'We could not confirm whether your request was received. Check My Bookings before making another request.'
-                              : ApiErrorHandler.messageFor(draft.errorCode),
-                          error: true,
-                        ),
-                        SizedBox(height: AppSize.vertical(20)),
                       ],
-                      AdaptiveColumns(
-                        main: draft.step == BookingStep.schedule
-                            ? BookingDateSelector(
-                                draft: draft,
-                                onPickDate: () => _pickDate(draft),
-                                onRefresh: ref
-                                    .read(
-                                      bookingControllerProvider(
-                                        widget.serviceId,
-                                      ).notifier,
-                                    )
-                                    .refreshAvailability,
-                                onSlotSelected: ref
-                                    .read(
-                                      bookingControllerProvider(
-                                        widget.serviceId,
-                                      ).notifier,
-                                    )
-                                    .selectSlot,
-                              )
-                            : BookingReviewSection(
-                                draft: draft,
-                                onRefresh: ref
-                                    .read(
-                                      bookingControllerProvider(
-                                        widget.serviceId,
-                                      ).notifier,
-                                    )
-                                    .refreshAvailability,
-                                onEdit: ref
-                                    .read(
-                                      bookingControllerProvider(
-                                        widget.serviceId,
-                                      ).notifier,
-                                    )
-                                    .edit,
-                              ),
-                        aside: ServicePriceSummary(
-                          service: service,
-                          action: desktop
-                              ? BookingActionButton(serviceId: widget.serviceId)
-                              : null,
-                          children: [
-                            DetailLine(
-                              label: 'Date',
-                              value: Formatters.date(draft.date),
-                            ),
-                            DetailLine(
-                              label: 'Time',
-                              value: draft.selectedSlot == null
-                                  ? 'Choose an available time'
-                                  : Formatters.time(
-                                      draft.selectedSlot!.workshopTime,
-                                    ),
-                            ),
-                            if (draft.availability != null)
-                              Text(
-                                draft.availability!.timeZone,
-                                style: TextStyle(
-                                  fontSize: AppSize.font(12),
-                                  color: AppColors.secondary,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
     );

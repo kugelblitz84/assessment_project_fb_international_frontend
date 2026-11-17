@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/widgets/app_surface.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/network/api_error_handler.dart';
@@ -20,7 +21,7 @@ class BookingReviewSection extends StatelessWidget {
   final VoidCallback onRefresh;
 
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AppSurface(
     child: Padding(
       padding: AppSize.cardPadding,
       child: Column(

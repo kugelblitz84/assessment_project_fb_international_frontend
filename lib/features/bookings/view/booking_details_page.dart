@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/network/api_error_handler.dart';
@@ -51,7 +52,9 @@ class BookingDetailsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final details = ref.watch(appointmentDetailsProvider(bookingId));
+    final provider = appointmentDetailsProvider(bookingId);
+    final details = ref.watch(provider);
+    void refresh() => ref.invalidate(provider);
     final user = ref.watch(currentUserProvider);
     return AppPageScaffold(
       title: 'Booking details',
@@ -60,21 +63,14 @@ class BookingDetailsPage extends ConsumerWidget {
           maxWidth: 760,
           child: details.when(
             loading: () => const LoadingState(label: 'Loading appointment…'),
-            error: (_, _) => ErrorState(
-              onRetry: () =>
-                  ref.invalidate(appointmentDetailsProvider(bookingId)),
-            ),
+            error: (_, _) => ErrorState(onRetry: refresh),
             data: (data) {
               if (user == null || data.ownerId != user.id) {
                 return const LoadingState();
               }
               final booking = data.appointment;
               if (booking == null) {
-                return ErrorState(
-                  code: data.errorCode,
-                  onRetry: () =>
-                      ref.invalidate(appointmentDetailsProvider(bookingId)),
-                );
+                return ErrorState(code: data.errorCode, onRetry: refresh);
               }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,7 +80,7 @@ class BookingDetailsPage extends ConsumerWidget {
                     style: Theme.of(context).textTheme.headlineMedium,
                   ),
                   SizedBox(height: AppSize.vertical(20)),
-                  Card(
+                  AppSurface(
                     child: Padding(
                       padding: AppSize.cardPadding,
                       child: Column(
@@ -148,11 +144,7 @@ class BookingDetailsPage extends ConsumerWidget {
                           ],
                           SizedBox(height: AppSize.vertical(12)),
                           TextButton.icon(
-                            onPressed: data.busy
-                                ? null
-                                : () => ref.invalidate(
-                                    appointmentDetailsProvider(bookingId),
-                                  ),
+                            onPressed: data.busy ? null : refresh,
                             icon: const Icon(Icons.refresh),
                             label: const Text('Refresh appointment'),
                           ),

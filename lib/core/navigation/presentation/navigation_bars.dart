@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_depth.dart';
 import 'auto_care_brand.dart';
 
 const appDestinations = [
@@ -22,17 +23,20 @@ class AppBottomNavigationBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final largeText = MediaQuery.textScalerOf(context).scale(16) > 22;
-    return NavigationBar(
-      height: largeText ? 94 : 80,
-      labelBehavior: largeText
-          ? NavigationDestinationLabelBehavior.onlyShowSelected
-          : NavigationDestinationLabelBehavior.alwaysShow,
-      selectedIndex: selectedIndex,
-      onDestinationSelected: onSelected,
-      destinations: [
-        for (final d in appDestinations)
-          NavigationDestination(icon: Icon(d.icon), label: d.label),
-      ],
+    return DecoratedBox(
+      decoration: const BoxDecoration(boxShadow: AppDepth.floating),
+      child: NavigationBar(
+        height: largeText ? 94 : 80,
+        labelBehavior: largeText
+            ? NavigationDestinationLabelBehavior.onlyShowSelected
+            : NavigationDestinationLabelBehavior.alwaysShow,
+        selectedIndex: selectedIndex,
+        onDestinationSelected: onSelected,
+        destinations: [
+          for (final d in appDestinations)
+            NavigationDestination(icon: Icon(d.icon), label: d.label),
+        ],
+      ),
     );
   }
 }
@@ -63,28 +67,36 @@ class DesktopNavigationBar extends StatelessWidget
     final stacked =
         MediaQuery.textScalerOf(context).scale(16) > 22 ||
         MediaQuery.sizeOf(context).width < 1100;
-    final nav = Wrap(
-      spacing: 4,
-      runSpacing: 4,
-      children: [
-        for (var i = 0; i < appDestinations.length; i++)
-          TextButton.icon(
-            style: TextButton.styleFrom(
-              backgroundColor: selectedIndex == i
-                  ? AppColors.primarySoft
-                  : null,
-              foregroundColor: selectedIndex == i
-                  ? AppColors.primary
-                  : AppColors.secondary,
+    final nav = Container(
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceRecessed,
+        borderRadius: BorderRadius.circular(AppSize.radius(13)),
+        border: Border.all(color: AppColors.border.withValues(alpha: .7)),
+      ),
+      child: Wrap(
+        spacing: 3,
+        runSpacing: 4,
+        children: [
+          for (var i = 0; i < appDestinations.length; i++)
+            TextButton.icon(
+              style: TextButton.styleFrom(
+                backgroundColor: selectedIndex == i ? AppColors.surface : null,
+                elevation: selectedIndex == i ? 2 : 0,
+                shadowColor: AppColors.shadow.withValues(alpha: .5),
+                foregroundColor: selectedIndex == i
+                    ? AppColors.primary
+                    : AppColors.secondary,
+              ),
+              onPressed: () => onSelected(i),
+              icon: Icon(appDestinations[i].icon, size: AppSize.icon(20)),
+              label: Text(appDestinations[i].label),
             ),
-            onPressed: () => onSelected(i),
-            icon: Icon(appDestinations[i].icon, size: AppSize.icon(20)),
-            label: Text(appDestinations[i].label),
-          ),
-      ],
+        ],
+      ),
     );
     return Material(
-      color: Colors.white,
+      color: AppColors.background,
       child: SafeArea(
         bottom: false,
         child: Container(

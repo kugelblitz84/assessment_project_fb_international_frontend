@@ -15,11 +15,16 @@ class HomeHeader extends ConsumerWidget {
       children: [
         Text(
           name == null ? 'Welcome' : 'Welcome, $name',
-          style: const TextStyle(color: AppColors.secondary),
+          style: TextStyle(
+            color: AppColors.secondary,
+            fontSize: AppSize.font(11),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.4,
+          ),
         ),
         SizedBox(height: AppSize.vertical(4)),
         Text(
-          'A little care. A better drive.',
+          'Keep your drive in its prime.',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
       ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_spacing.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_depth.dart';
 
 class AutoCareBrand extends StatelessWidget {
   const AutoCareBrand({super.key, this.light = false});
@@ -13,12 +14,18 @@ class AutoCareBrand extends StatelessWidget {
       Container(
         padding: AppSize.inset(8),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF414D44), AppColors.graphite],
+          ),
           borderRadius: BorderRadius.circular(AppSize.radius(10)),
+          border: Border.all(color: Colors.white.withValues(alpha: .2)),
+          boxShadow: light ? null : AppDepth.control,
         ),
         child: Icon(
-          Icons.directions_car_filled_rounded,
-          color: Colors.white,
+          Icons.speed_rounded,
+          color: AppColors.accent,
           size: AppSize.icon(23),
         ),
       ),
@@ -29,10 +36,11 @@ class AutoCareBrand extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: AppSize.font(22),
-            fontWeight: FontWeight.w800,
-            letterSpacing: -.6,
-            color: light ? Colors.white : AppColors.navy,
+            fontFamily: 'RobotoCondensed',
+            fontSize: AppSize.font(25),
+            fontWeight: FontWeight.w700,
+            letterSpacing: -.5,
+            color: light ? Colors.white : AppColors.graphite,
           ),
         ),
       ),

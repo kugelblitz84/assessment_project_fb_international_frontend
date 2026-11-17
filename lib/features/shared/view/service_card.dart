@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -12,7 +13,7 @@ class ServiceCard extends StatelessWidget {
   const ServiceCard({super.key, required this.service});
   final ServiceModel service;
   @override
-  Widget build(BuildContext context) => Card(
+  Widget build(BuildContext context) => AppSurface(
     clipBehavior: Clip.antiAlias,
     child: InkWell(
       onTap: () => context.pushNamed(
@@ -31,13 +32,13 @@ class ServiceCard extends StatelessWidget {
                 Text(
                   service.categoryName.toUpperCase(),
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: AppColors.secondary,
                     fontSize: AppSize.font(11),
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
                   ),
                 ),
-                SizedBox(height: AppSize.vertical(8)),
+                SizedBox(height: AppSize.vertical(10)),
                 Text(
                   service.name,
                   maxLines: 2,
@@ -70,13 +71,15 @@ class ServiceCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                SizedBox(height: AppSize.vertical(8)),
+                SizedBox(height: AppSize.vertical(12)),
+                const Divider(height: 1),
+                SizedBox(height: AppSize.vertical(12)),
                 Text(
                   Formatters.price(service.price, service.currency),
                   style: TextStyle(
-                    fontSize: AppSize.font(22),
+                    fontSize: AppSize.font(24),
                     fontWeight: FontWeight.w700,
-                    color: AppColors.navy,
+                    color: AppColors.graphite,
                   ),
                 ),
                 SizedBox(height: AppSize.vertical(8)),

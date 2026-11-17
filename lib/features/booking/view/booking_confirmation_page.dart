@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/widgets/app_surface.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/navigation/presentation/page_scaffold.dart';
 import '../../../core/session/application/current_user_provider.dart';
@@ -51,7 +52,7 @@ class BookingConfirmationPage extends ConsumerWidget {
                 BookingStatus.cancelled => 'Appointment cancelled',
                 BookingStatus.completed => 'Service completed',
               };
-              return Card(
+              return AppSurface(
                 child: Padding(
                   padding: AppSize.cardPadding,
                   child: Column(

@@ -20,5 +20,5 @@ abstract final class AppSize {
     vertical: vertical(value),
   );
   static EdgeInsets get cardPadding => inset(24);
-  static BorderRadius get cardRadius => BorderRadius.circular(radius(16));
+  static BorderRadius get cardRadius => BorderRadius.circular(radius(14));
 }

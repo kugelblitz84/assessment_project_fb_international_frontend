@@ -58,6 +58,7 @@ void main() {
       await tester.tap(find.text('View my bookings'));
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('View details').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('View details').first);
       await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Cancel appointment'));
