@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
@@ -79,6 +80,10 @@ Map<String, dynamic> appointmentJson({String status = 'pending'}) => {
   'cancelledAt': null,
   'vehicle': null,
   'appliedOfferId': null,
+  'paymentStatus': 'unpaid',
+  'paymentMethod': null,
+  'canPayOnline': true,
+  'canCancel': status == 'pending' || status == 'confirmed',
 };
 const offerJson = {
   'id': 'c4000000-0000-4000-8000-000000000001',
@@ -202,6 +207,9 @@ ProviderContainer adminContainer({
     );
   final container = ProviderContainer.test(
     overrides: [
+      backendReadinessProvider.overrideWith(
+        (ref) => BackendReadiness(() async {}),
+      ),
       if (imagePicker != null)
         adminImagePickerProvider.overrideWithValue(imagePicker),
       demoModeProvider.overrideWithValue(true),

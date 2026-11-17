@@ -1,4 +1,5 @@
 import 'availability_model.dart';
+import 'payment_summary.dart';
 
 enum BookingStatus { pending, confirmed, cancelled, completed }
 
@@ -14,6 +15,9 @@ class AppointmentModel {
     required this.durationMinutes,
     this.originalPrice,
     this.canCancel = false,
+    this.paymentStatus = PaymentSummary.unpaid,
+    this.paymentMethod,
+    this.canPayOnline = false,
   });
   final String id;
   final String serviceId;
@@ -25,6 +29,9 @@ class AppointmentModel {
   final int durationMinutes;
   final num? originalPrice;
   final bool canCancel;
+  final PaymentSummary paymentStatus;
+  final String? paymentMethod;
+  final bool canPayOnline;
   bool get upcoming =>
       (status == BookingStatus.pending || status == BookingStatus.confirmed) &&
       slot.startsAt.isAfter(DateTime.now());
@@ -40,6 +47,9 @@ class AppointmentModel {
     durationMinutes: durationMinutes,
     originalPrice: originalPrice,
     canCancel: status != null && status != this.status ? false : canCancel,
+    paymentStatus: paymentStatus,
+    paymentMethod: paymentMethod,
+    canPayOnline: canPayOnline,
   );
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) =>
@@ -54,6 +64,9 @@ class AppointmentModel {
         durationMinutes: json['durationMinutes'] as int,
         originalPrice: json['originalPrice'] as num?,
         canCancel: _readCanCancel(json),
+        paymentStatus: PaymentSummary.parse(json['paymentStatus'] as String),
+        paymentMethod: paymentMethodFromJson(json['paymentMethod']),
+        canPayOnline: json['canPayOnline'] as bool,
       );
 
   static bool _readCanCancel(Map<String, dynamic> json) {

@@ -1,3 +1,5 @@
+import 'package:assessment_project_fb_international_frontend/core/config/platform_config.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
@@ -15,6 +17,7 @@ class FastDemoWorkshop extends DemoWorkshop {
 }
 
 ProviderContainer demoContainer({
+  BackendReadiness? readiness,
   bool authenticated = true,
   bool demoData = true,
   BookingService Function(Dio, DemoWorkshop?)? bookingFactory,
@@ -22,6 +25,10 @@ ProviderContainer demoContainer({
   AssistantService Function(Dio, DemoWorkshop?)? assistantFactory,
 }) => ProviderContainer.test(
   overrides: [
+    platformConfigProvider.overrideWith((ref) async => PlatformConfig.demo),
+    backendReadinessProvider.overrideWith(
+      (ref) => readiness ?? BackendReadiness(() async {}),
+    ),
     demoModeProvider.overrideWithValue(demoData),
     demoWorkshopProvider.overrideWithValue(
       demoData ? FastDemoWorkshop() : null,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/demo_mode.dart';
 import '../model/availability_model.dart';
 import '../model/appointment_model.dart';
+import '../model/payment_summary.dart';
 import '../model/service_model.dart';
 
 final demoWorkshopProvider = Provider<DemoWorkshop?>(
@@ -220,6 +221,9 @@ class DemoWorkshop {
     ),
     status: status,
     canCancel: status == BookingStatus.pending,
+    paymentStatus: PaymentSummary.unpaid,
+    paymentMethod: null,
+    canPayOnline: false,
     price: service.price,
     currency: service.currency,
     durationMinutes: service.durationMinutes,
@@ -255,6 +259,9 @@ class DemoWorkshop {
       slot: slot,
       status: BookingStatus.pending,
       canCancel: true,
+      paymentStatus: PaymentSummary.unpaid,
+      paymentMethod: null,
+      canPayOnline: false,
       price: service.price,
       currency: service.currency,
       durationMinutes: service.durationMinutes,

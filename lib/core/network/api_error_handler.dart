@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../session/domain/session_exception.dart';
 import 'backend_contract_exception.dart';
+import 'backend_readiness.dart';
 
 /// The result of a feature service operation, including no-content successes.
 class ApiResponse<T> {
@@ -40,6 +41,7 @@ abstract final class ApiErrorHandler {
   static String _codeForDio(DioException error) {
     // Interceptor rejections and JSON decoding failures can be wrapped by Dio.
     final cause = error.error;
+    if (cause is BackendUnavailable) return 'BACKEND_UNAVAILABLE';
     if (cause is SessionException) return _codeForSession(cause);
     if (cause is FormatException || cause is TypeError) {
       return 'INVALID_RESPONSE';
@@ -60,6 +62,18 @@ abstract final class ApiErrorHandler {
     final body = error.response?.data;
     final assistantCode = body is Map ? body['code'] : null;
     const assistantCodes = {
+      'PAYMENT_NOT_ELIGIBLE',
+      'APPOINTMENT_ALREADY_PAID',
+      'PAYMENT_UNRESOLVED',
+      'PAYMENT_REVIEW_REQUIRED',
+      'PAYMENT_CANCELLATION_BLOCKED',
+      'PAYMENT_CONTACT_UNSUPPORTED',
+      'PAYMENT_RATE_LIMITED',
+      'PAYMENT_RECONCILE_THROTTLED',
+      'PAYMENTS_DISABLED',
+      'PAYMENT_INITIATION_UNCERTAIN',
+      'PAYMENT_GATEWAY_UNAVAILABLE',
+      'PAYMENT_VERIFICATION_UNAVAILABLE',
       'ASSISTANT_DISABLED',
       'ASSISTANT_CONFIGURATION_ERROR',
       'ASSISTANT_CONTEXT_TOO_LARGE',
@@ -103,6 +117,32 @@ abstract final class ApiErrorHandler {
 
   /// Only locally defined copy is exposed to views, never server error details.
   static String messageFor(String? code) => switch (code) {
+    'BACKEND_UNAVAILABLE' =>
+      'The workshop is temporarily unavailable. Retry connecting; your session is preserved.',
+    'PAYMENT_NOT_ELIGIBLE' =>
+      'Online payment is not available for this appointment. Refresh its details.',
+    'APPOINTMENT_ALREADY_PAID' =>
+      'This appointment already has an applied payment. Do not pay again.',
+    'PAYMENT_UNRESOLVED' =>
+      'An existing payment is unresolved. Refresh its status before paying again.',
+    'PAYMENT_REVIEW_REQUIRED' =>
+      'This payment needs manual review. Contact workshop support and do not pay again.',
+    'PAYMENT_CANCELLATION_BLOCKED' =>
+      'Paid or unresolved payments block cancellation. Refresh payment status or contact support.',
+    'PAYMENT_CONTACT_UNSUPPORTED' =>
+      'Update your profile name/email to at most 50 characters or pay at the workshop.',
+    'PAYMENT_RATE_LIMITED' =>
+      'The payment request limit was reached. Wait before trying again.',
+    'PAYMENT_RECONCILE_THROTTLED' =>
+      'Wait at least five seconds before refreshing payment status.',
+    'PAYMENTS_DISABLED' =>
+      'Online payment is unavailable. Your booking remains valid; pay at the workshop.',
+    'PAYMENT_INITIATION_UNCERTAIN' =>
+      'Checkout may have started. Refresh the existing payment before another attempt.',
+    'PAYMENT_GATEWAY_UNAVAILABLE' =>
+      'The gateway is unavailable. Refresh payment history before another attempt.',
+    'PAYMENT_VERIFICATION_UNAVAILABLE' =>
+      'Payment could not be verified. Refresh later; do not pay again yet.',
     'ASSISTANT_DISABLED' ||
     'ASSISTANT_CONFIGURATION_ERROR' ||
     'ASSISTANT_CONTEXT_TOO_LARGE' =>

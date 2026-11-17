@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -58,6 +59,9 @@ void main() {
       storage = MemoryTokenStorage('saved-token');
       final container = ProviderContainer.test(
         overrides: [
+          backendReadinessProvider.overrideWith(
+            (ref) => BackendReadiness(() async {}),
+          ),
           tokenStorageProvider.overrideWithValue(storage),
           apiBaseUrlProvider.overrideWithValue('http://localhost:3000/api'),
         ],

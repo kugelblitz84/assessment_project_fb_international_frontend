@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_error_handler.dart';
-import '../../../core/utils/workshop_calendar.dart';
+import '../../../core/config/platform_config.dart';
 import '../../../core/session/application/session_controller.dart';
 import '../../../core/session/application/session_identity_provider.dart';
 import '../../../core/session/domain/auth_state.dart';
@@ -18,8 +18,15 @@ class BookingController extends AsyncNotifier<BookingState> {
   BookingController(this.serviceId);
   final String serviceId;
   int _request = 0;
+  DateTime? _configLoadedAt;
+  bool get configurationFresh =>
+      _configLoadedAt != null &&
+      DateTime.now().difference(_configLoadedAt!) <
+          const Duration(minutes: 5) &&
+      ref.read(platformConfigProvider).asData?.value.fresh == true;
   DateTime get firstBookableDate => ref.read(bookingServiceProvider).today;
-  DateTime get lastBookableDate => WorkshopCalendar.lastDate(firstBookableDate);
+  DateTime get lastBookableDate =>
+      ref.read(platformConfigProvider).requireValue.lastDate(firstBookableDate);
 
   @override
   Future<BookingState> build() async {
@@ -31,6 +38,14 @@ class BookingController extends AsyncNotifier<BookingState> {
     if (session is! Authenticated) {
       return BookingState(date: date, availabilityError: 'UNAUTHORIZED');
     }
+    final config = await ref.watch(platformConfigProvider.future);
+    if (!config.fresh) {
+      ref.invalidate(platformConfigProvider);
+      throw const FormatException(
+        'Workshop configuration expired. Retry loading booking settings.',
+      );
+    }
+    _configLoadedAt = DateTime.now();
     final result = await ApiErrorHandler.run(
       () => service.getAvailability(serviceId, date),
     );
@@ -55,6 +70,13 @@ class BookingController extends AsyncNotifier<BookingState> {
         current.submitting ||
         current.uncertain ||
         current.created != null) {
+      return;
+    }
+    if (!configurationFresh) {
+      ref.invalidate(platformConfigProvider);
+      return;
+    }
+    if (date.isBefore(firstBookableDate) || date.isAfter(lastBookableDate)) {
       return;
     }
     if (current.loadingSlots && current.date == date) return;
@@ -96,6 +118,10 @@ class BookingController extends AsyncNotifier<BookingState> {
   }
 
   Future<void> refreshAvailability() async {
+    if (!configurationFresh) {
+      ref.invalidate(platformConfigProvider);
+      return;
+    }
     final current = state.asData?.value;
     if (current == null || current.loadingSlots) return;
     final today = ref.read(bookingServiceProvider).today;
@@ -137,6 +163,10 @@ class BookingController extends AsyncNotifier<BookingState> {
   }
 
   Future<void> submit() async {
+    if (!configurationFresh) {
+      ref.invalidate(platformConfigProvider);
+      return;
+    }
     final current = state.asData?.value;
     final identity = ref.read(sessionIdentityProvider);
     final session = ref.read(sessionProvider).asData?.value;

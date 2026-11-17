@@ -1,4 +1,15 @@
 abstract final class ApiEndpoints {
+  static const health = '/health/status';
+  static const platform = '/platform';
+  static const payments = '/payments';
+  static const paymentConfig = '/payments/config';
+  static const adminPayments = '/admin/payments';
+  static String appointmentPayments(String id) =>
+      '${resource(appointments, id)}/payments';
+  static String payAppointment(String id) =>
+      '${resource(appointments, id)}/pay';
+  static String reconcilePayment(String id, {bool admin = false}) =>
+      '${resource(admin ? adminPayments : payments, id)}/reconcile';
   static const profile = '/users/me';
   static const appointments = '/appointments';
   static String availability(String id) =>

@@ -45,6 +45,9 @@ Map<String, dynamic> appointmentJson({bool canCancel = true}) => {
   'currency': 'BDT',
   'durationMinutes': 30,
   'canCancel': canCancel,
+  'paymentStatus': 'unpaid',
+  'paymentMethod': null,
+  'canPayOnline': true,
 };
 
 /// Mocked transport, including JSON decoding; no live requests or gateway calls.
@@ -106,7 +109,7 @@ void main() {
 
   test('booking horizon includes today and ends after 29 calendar days', () {
     expect(
-      WorkshopCalendar.lastDate(DateTime(2026, 12, 20)),
+      WorkshopCalendar.lastDate(DateTime(2026, 12, 20), horizonDays: 30),
       DateTime(2027, 1, 18),
     );
   });

@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/network/backend_readiness.dart';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
@@ -39,7 +40,12 @@ void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
   test('fresh native startup sends no backend requests', () async {
     final container = ProviderContainer.test(
-      overrides: [tokenStorageProvider.overrideWithValue(MemoryTokenStorage())],
+      overrides: [
+        backendReadinessProvider.overrideWith(
+          (ref) => BackendReadiness(() async {}),
+        ),
+        tokenStorageProvider.overrideWithValue(MemoryTokenStorage()),
+      ],
     );
     var requests = 0;
     final adapter = Adapter((_) async {
@@ -61,6 +67,9 @@ void main() {
       final storage = MemoryTokenStorage();
       ProviderContainer createContainer() => ProviderContainer(
         overrides: [
+          backendReadinessProvider.overrideWith(
+            (ref) => BackendReadiness(() async {}),
+          ),
           tokenStorageProvider.overrideWithValue(storage),
           apiBaseUrlProvider.overrideWithValue('https://api.example.test'),
         ],
@@ -112,7 +121,12 @@ void main() {
       () async {
         final storage = MemoryTokenStorage('saved');
         final container = ProviderContainer.test(
-          overrides: [tokenStorageProvider.overrideWithValue(storage)],
+          overrides: [
+            backendReadinessProvider.overrideWith(
+              (ref) => BackendReadiness(() async {}),
+            ),
+            tokenStorageProvider.overrideWithValue(storage),
+          ],
         );
         final dio = container.read(dioProvider);
         var protectedRequests = 0;
@@ -179,6 +193,9 @@ void main() {
       final storage = MemoryTokenStorage('old');
       ProviderContainer container() => ProviderContainer(
         overrides: [
+          backendReadinessProvider.overrideWith(
+            (ref) => BackendReadiness(() async {}),
+          ),
           tokenStorageProvider.overrideWithValue(storage),
           apiBaseUrlProvider.overrideWithValue('https://api.example.test'),
         ],
@@ -242,7 +259,12 @@ void main() {
   test('a second 401 is returned without another refresh', () async {
     final storage = MemoryTokenStorage('old');
     final container = ProviderContainer(
-      overrides: [tokenStorageProvider.overrideWithValue(storage)],
+      overrides: [
+        backendReadinessProvider.overrideWith(
+          (ref) => BackendReadiness(() async {}),
+        ),
+        tokenStorageProvider.overrideWithValue(storage),
+      ],
     );
     addTearDown(container.dispose);
     var calls = 0;

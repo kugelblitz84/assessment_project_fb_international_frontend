@@ -36,6 +36,10 @@ class BookingPage extends ConsumerWidget {
   ) async {
     final provider = bookingControllerProvider(serviceId);
     final controller = ref.read(provider.notifier);
+    if (!controller.configurationFresh) {
+      await controller.refreshAvailability();
+      return;
+    }
     final identity = ref.read(sessionIdentityProvider);
     final today = controller.firstBookableDate;
     var validDraft = true;
