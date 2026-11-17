@@ -15,8 +15,14 @@ import '../features/profile/presentation/pages/edit_profile_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/services/presentation/pages/service_details_page.dart';
 import 'app_routes.dart';
+import '../features/onboarding/presentation/pages/onboarding_page.dart';
 
 final appPages = <RouteBase>[
+  GoRoute(
+    name: AppRoutes.onboarding,
+    path: AppRoutes.onboardingPath,
+    builder: (context, state) => const OnboardingPage(),
+  ),
   GoRoute(
     name: AppRoutes.bootstrap,
     path: AppRoutes.bootstrapPath,

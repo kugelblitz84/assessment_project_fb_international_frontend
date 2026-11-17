@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../application/session_controller.dart';
+import '../../onboarding/onboarding_provider.dart';
 
 class BootstrapErrorPage extends ConsumerWidget {
   const BootstrapErrorPage({super.key});
@@ -16,12 +16,12 @@ class BootstrapErrorPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Unable to restore your session. Check your connection and try again.',
+              'Unable to load your app preferences. Please try again.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: () => ref.invalidate(sessionProvider),
+              onPressed: () => ref.invalidate(onboardingProvider),
               child: const Text('Retry'),
             ),
           ],

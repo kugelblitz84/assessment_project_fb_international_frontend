@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/cookie_transport.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +40,34 @@ void main() {
       isA<Unauthenticated>(),
     );
     expect(repository.restoredToken, isNull);
+    expect(repository.refreshCalls, 0);
+  });
+
+  test('browser-style restoration probes invisible refresh cookies', () async {
+    final browser = ProviderContainer.test(
+      overrides: [
+        tokenStorageProvider.overrideWithValue(storage),
+        authRepositoryProvider.overrideWithValue(repository),
+        cookieTransportProvider.overrideWithValue(_BrowserCookies()),
+      ],
+    );
+    repository.refreshToken = 'cookie-restored';
+    expect(await browser.read(sessionProvider.future), isA<Authenticated>());
+    expect(repository.refreshCalls, 1);
+    expect(repository.restoredToken, 'cookie-restored');
+  });
+
+  test('rejected browser refresh enters guest mode', () async {
+    final browser = ProviderContainer.test(
+      overrides: [
+        tokenStorageProvider.overrideWithValue(storage),
+        authRepositoryProvider.overrideWithValue(repository),
+        cookieTransportProvider.overrideWithValue(_BrowserCookies()),
+      ],
+    );
+    expect(await browser.read(sessionProvider.future), isA<Unauthenticated>());
+    expect(repository.refreshCalls, 1);
+    expect(browser.read(tokenRefreshCoordinatorProvider).enabled, isFalse);
   });
 
   test(
@@ -152,6 +184,63 @@ void main() {
   );
 
   test(
+    'logout drains authentication token persistence before clearing credentials',
+    () async {
+      await container.read(sessionProvider.future);
+      storage.saveGate = Completer<void>();
+      final controller = container.read(sessionProvider.notifier);
+      final login = controller.login(
+        email: testUser.email,
+        password: 'password',
+      );
+      await storage.saving.future;
+      var finishedLogout = false;
+      final logout = controller.logout().then((_) => finishedLogout = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(finishedLogout, isFalse);
+      storage.saveGate!.complete();
+      await Future.wait([login, logout]);
+      expect(storage.token, isNull);
+      expect(container.read(currentUserProvider), isNull);
+    },
+  );
+
+  test(
+    'account replacement clears the prior user and waits for older token writes',
+    () async {
+      storage.token = 'saved';
+      await container.read(sessionProvider.future);
+      storage.saveGate = Completer<void>();
+      final controller = container.read(sessionProvider.notifier);
+      final first = controller.login(
+        email: testUser.email,
+        password: 'password',
+      );
+      await storage.saving.future;
+      expect(container.read(currentUserProvider), isNull);
+      const replacementUser = UserEntity(
+        id: 'customer-2',
+        name: 'Replacement',
+        email: 'new@example.com',
+      );
+      repository.authenticationSession = const AuthSession(
+        accessToken: 'replacement-token',
+        user: replacementUser,
+      );
+      final replacement = controller.register(
+        name: 'Replacement',
+        email: 'new@example.com',
+        password: 'password',
+      );
+      await Future<void>.delayed(Duration.zero);
+      storage.saveGate!.complete();
+      await Future.wait([first, replacement]);
+      expect(storage.token, 'replacement-token');
+      expect(container.read(currentUserProvider), same(replacementUser));
+    },
+  );
+
+  test(
     'logout propagates deletion failures and clears the user only on success',
     () async {
       storage.token = 'saved-token';
@@ -171,4 +260,13 @@ void main() {
       );
     },
   );
+}
+
+/// Models the browser's inability to inspect HttpOnly cookies.
+class _BrowserCookies extends CookieTransport {
+  _BrowserCookies() : super(Uri.parse('https://api.example.test'));
+  @override
+  Future<bool> canRestoreSession() async => true;
+  @override
+  Future<void> clear() async {}
 }

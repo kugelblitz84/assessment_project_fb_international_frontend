@@ -26,12 +26,18 @@ class SecureCookieStorage implements Storage {
 }
 
 class CookieTransport {
-  CookieTransport(Uri base)
+  CookieTransport(this.base)
     : jar = PersistCookieJar(
         storage: SecureCookieStorage(Uri.encodeComponent(base.toString())),
         persistSession: true,
       );
   final PersistCookieJar jar;
+  final Uri base;
+  Future<bool> canRestoreSession() async => (await jar.loadForRequest(
+    Uri.parse(
+      '${base.toString().replaceFirst(RegExp(r'/+$'), '')}/auth/refresh',
+    ),
+  )).isNotEmpty;
   void configure(Dio dio, bool Function(Uri) trusted) {
     dio.interceptors.add(_TrustedCookies(jar, trusted));
   }

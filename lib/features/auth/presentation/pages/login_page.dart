@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/session/application/session_controller.dart';
 import '../../../../core/session/domain/auth_state.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../routes/route_access_policy.dart';
 import '../auth_form_helpers.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -93,7 +94,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               TextButton(
                 onPressed: _submitting
                     ? null
-                    : () => context.goNamed(AppRoutes.register),
+                    : () => context.goNamed(
+                        AppRoutes.register,
+                        queryParameters: RouteAccessPolicy.redirectParameters(
+                          GoRouterState.of(context).uri,
+                        ),
+                      ),
                 child: const Text('Create an account'),
               ),
             ],

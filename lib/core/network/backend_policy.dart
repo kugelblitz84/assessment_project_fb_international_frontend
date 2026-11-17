@@ -7,7 +7,7 @@ class BackendPolicy {
   bool trusted(Uri uri) =>
       uri.origin == base.origin &&
       (path.isEmpty || uri.path.startsWith('$path/'));
-  bool public(Uri uri) =>
+  bool isAuthEndpoint(Uri uri) =>
       [
         ApiEndpoints.login,
         ApiEndpoints.register,

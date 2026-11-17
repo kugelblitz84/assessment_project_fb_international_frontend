@@ -47,19 +47,39 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           if (user != null) ...[
             Text('Name: ${user.name}'),
             Text('Email: ${user.email}'),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: _loggingOut
+                  ? null
+                  : () => context.pushNamed(AppRoutes.editProfile),
+              child: const Text('Edit profile'),
+            ),
+            if (_error != null)
+              Semantics(liveRegion: true, child: Text(_error!)),
+            FilledButton(
+              onPressed: _loggingOut ? null : _logout,
+              child: Text(_loggingOut ? 'Logging out...' : 'Log out'),
+            ),
+          ] else ...[
+            const Text('Browse AutoCare as a guest.'),
+            FilledButton(
+              onPressed: () => context.goNamed(AppRoutes.login),
+              child: const Text('Login'),
+            ),
+            OutlinedButton(
+              onPressed: () => context.goNamed(AppRoutes.register),
+              child: const Text('Create Account'),
+            ),
+            if (ref.watch(sessionProvider).hasError) ...[
+              const Text(
+                'Your session could not be restored. You can keep browsing or retry.',
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(sessionProvider),
+                child: const Text('Retry session restoration'),
+              ),
+            ],
           ],
-          const SizedBox(height: 16),
-          OutlinedButton(
-            onPressed: _loggingOut
-                ? null
-                : () => context.pushNamed(AppRoutes.editProfile),
-            child: const Text('Edit profile'),
-          ),
-          if (_error != null) Semantics(liveRegion: true, child: Text(_error!)),
-          FilledButton(
-            onPressed: _loggingOut ? null : _logout,
-            child: Text(_loggingOut ? 'Logging out...' : 'Log out'),
-          ),
         ],
       ),
     );

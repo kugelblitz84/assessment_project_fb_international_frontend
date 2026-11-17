@@ -1,6 +1,8 @@
 abstract final class AppRoutes {
   static const bootstrap = 'bootstrap';
   static const bootstrapPath = '/';
+  static const onboarding = 'onboarding';
+  static const onboardingPath = '/onboarding';
   static const login = 'login';
   static const loginPath = '/login';
   static const register = 'register';

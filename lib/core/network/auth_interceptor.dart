@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../session/domain/token_storage.dart';
-import 'api_endpoints.dart';
+import 'request_access.dart';
 import '../session/application/token_refresh_coordinator.dart';
 import '../session/domain/session_exception.dart';
 import 'backend_policy.dart';
@@ -25,19 +25,10 @@ class AuthInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    final uri = options.uri;
-    final basePath = _apiBaseUri.path.replaceFirst(RegExp(r'/+$'), '');
-    final isBackend =
-        uri.origin == _apiBaseUri.origin &&
-        (basePath.isEmpty || uri.path.startsWith('$basePath/'));
-    final requestPath = uri.path.replaceFirst(RegExp(r'/+$'), '');
-    final isAuthRequest =
-        requestPath == '$basePath${ApiEndpoints.login}' ||
-        requestPath == '$basePath${ApiEndpoints.register}' ||
-        requestPath == '$basePath${ApiEndpoints.refresh}' ||
-        requestPath == '$basePath${ApiEndpoints.logout}';
-
-    if (!isBackend || isAuthRequest) {
+    final policy = BackendPolicy(_apiBaseUri);
+    if (!policy.trusted(options.uri) ||
+        policy.isAuthEndpoint(options.uri) ||
+        options.extra[requestAccessKey] == RequestAccess.public) {
       options.headers.removeWhere(
         (key, value) => key.toLowerCase() == 'authorization',
       );
@@ -68,8 +59,15 @@ class AuthInterceptor extends Interceptor {
     }
     try {
       final token = await _tokenStorage.readToken();
+      if (coordinator != null &&
+          (!coordinator!.enabled ||
+              options.extra['authGeneration'] != coordinator!.generation)) {
+        throw const InvalidSessionException();
+      }
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
+      } else {
+        throw const InvalidSessionException();
       }
       handler.next(options);
     } catch (_) {
@@ -101,7 +99,8 @@ class AuthInterceptor extends Interceptor {
             code['code'] != null &&
             code['code'] != 'ACCESS_TOKEN_EXPIRED') ||
         !policy.trusted(options.uri) ||
-        policy.public(options.uri) ||
+        policy.isAuthEndpoint(options.uri) ||
+        options.extra[requestAccessKey] == RequestAccess.public ||
         options.extra['authRetried'] == true ||
         authorization is! String ||
         !authorization.startsWith('Bearer ') ||

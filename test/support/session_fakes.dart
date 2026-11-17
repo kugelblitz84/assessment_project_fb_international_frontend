@@ -46,8 +46,16 @@ class MemoryTokenStorage implements TokenStorage {
 }
 
 class StubAuthRepository implements AuthRepository {
+  int refreshCalls = 0;
+  String? refreshToken;
+  Object? refreshError;
   @override
-  Future<String> refresh() async => throw const InvalidSessionException();
+  Future<String> refresh() async {
+    refreshCalls++;
+    if (refreshError != null) throw refreshError!;
+    return refreshToken ?? (throw const InvalidSessionException());
+  }
+
   @override
   Future<void> logout() async {}
   Object? currentUserError;
@@ -55,6 +63,10 @@ class StubAuthRepository implements AuthRepository {
   String? restoredToken;
   Completer<UserEntity>? currentUserGate;
   Completer<AuthSession>? authGate;
+  AuthSession authenticationSession = const AuthSession(
+    accessToken: 'test-access-token',
+    user: testUser,
+  );
 
   @override
   Future<UserEntity> getCurrentUser({required String token}) async {
@@ -65,9 +77,7 @@ class StubAuthRepository implements AuthRepository {
 
   Future<AuthSession> _authenticate() async {
     if (authError != null) throw authError!;
-    return authGate == null
-        ? const AuthSession(accessToken: 'test-access-token', user: testUser)
-        : authGate!.future;
+    return authGate == null ? authenticationSession : authGate!.future;
   }
 
   @override
