@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../session/application/token_storage_provider.dart';
 import '../session/application/token_refresh_coordinator.dart';
@@ -11,7 +12,7 @@ import 'cookie_transport.dart';
 final apiBaseUrlProvider = Provider<String>(
   (ref) => const String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:3000',
+    defaultValue: 'http://10.0.2.2:3000/api/v1',
   ),
 );
 final backendPolicyProvider = Provider(
@@ -36,6 +37,40 @@ Dio _client(Ref ref) {
   ref
       .watch(cookieTransportProvider)
       .configure(dio, ref.watch(backendPolicyProvider).trusted);
+  if (kIsWeb) {
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          if (options.path != ApiEndpoints.refresh &&
+              options.path != ApiEndpoints.logout) {
+            handler.next(options);
+            return;
+          }
+          try {
+            final csrf = await dio.get<Object?>(ApiEndpoints.csrf);
+            final data = csrf.data;
+            if (data is! Map || data['csrfToken'] is! String) {
+              throw const InvalidAuthResponseException();
+            }
+            options.headers['X-CSRF-Token'] = data['csrfToken'];
+            handler.next(options);
+          } catch (error) {
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                error:
+                    error is DioException && error.response?.statusCode == 401
+                    ? const InvalidSessionException()
+                    : const AuthRequestException(
+                        'Unable to verify browser session.',
+                      ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
   ref.onDispose(() => dio.close(force: true));
   return dio;
 }

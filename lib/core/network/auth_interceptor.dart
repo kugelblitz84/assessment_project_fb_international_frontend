@@ -36,6 +36,14 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
+    final optional = options.extra[requestAccessKey] == RequestAccess.optional;
+    if (optional && coordinator?.enabled == false) {
+      options.headers.removeWhere(
+        (key, _) => key.toLowerCase() == 'authorization',
+      );
+      handler.next(options);
+      return;
+    }
     options.followRedirects = false;
     options.extra.putIfAbsent('authGeneration', () => coordinator?.generation);
     if (coordinator != null &&
@@ -66,7 +74,7 @@ class AuthInterceptor extends Interceptor {
       }
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
-      } else {
+      } else if (!optional) {
         throw const InvalidSessionException();
       }
       handler.next(options);

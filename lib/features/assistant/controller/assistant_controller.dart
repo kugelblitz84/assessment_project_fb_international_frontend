@@ -64,7 +64,25 @@ class AssistantController extends Notifier<AssistantState> {
     final identity = ref.read(sessionIdentityProvider);
     // Watch once through the shared controller so recommendations resolve to the
     // same current service models used by Explore and booking.
-    await ref.read(catalogControllerProvider.future);
+    final catalogResult = await ApiErrorHandler.run(
+      () => ref.read(catalogControllerProvider.future),
+    );
+    if (!ref.mounted ||
+        request != _generation ||
+        identity != ref.read(sessionIdentityProvider)) {
+      return;
+    }
+    if (!catalogResult.success || catalogResult.data?.errorCode != null) {
+      state = state.copyWith(
+        sending: false,
+        errorCode:
+            catalogResult.errorCode ??
+            catalogResult.data?.errorCode ??
+            'INVALID_RESPONSE',
+        failedMessageId: messageId,
+      );
+      return;
+    }
     if (!ref.mounted ||
         request != _generation ||
         identity != ref.read(sessionIdentityProvider)) {
@@ -88,10 +106,22 @@ class AssistantController extends Notifier<AssistantState> {
       );
       return;
     }
+    // Resolve cards against a fresh authoritative catalog after generation.
+    await ApiErrorHandler.run(
+      () => ref.read(catalogControllerProvider.notifier).refresh(),
+    );
+    if (!ref.mounted ||
+        request != _generation ||
+        identity != ref.read(sessionIdentityProvider)) {
+      return;
+    }
+    final currentCatalog = ref.read(catalogControllerProvider).asData?.value;
     final response = result.data!;
     final valid = resolveRecommendations(
       response.actions,
-      ref.read(catalogByIdProvider),
+      currentCatalog?.errorCode == null
+          ? ref.read(catalogByIdProvider)
+          : const {},
     ).map((recommendation) => recommendation.action).toList(growable: false);
     final safeMessage = AssistantMessageModel(
       id: response.id,

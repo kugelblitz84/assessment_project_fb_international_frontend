@@ -57,6 +57,26 @@ abstract final class ApiErrorHandler {
     }
 
     final status = error.response?.statusCode;
+    final body = error.response?.data;
+    final assistantCode = body is Map ? body['code'] : null;
+    const assistantCodes = {
+      'ASSISTANT_DISABLED',
+      'ASSISTANT_CONFIGURATION_ERROR',
+      'ASSISTANT_CONTEXT_TOO_LARGE',
+      'ASSISTANT_RATE_LIMITED',
+      'ASSISTANT_DAILY_LIMIT',
+      'ASSISTANT_BUSY',
+      'ASSISTANT_QUOTA_EXHAUSTED',
+      'ASSISTANT_TIMEOUT',
+      'ASSISTANT_INVALID_RESPONSE',
+      'ASSISTANT_PROVIDER_ERROR',
+      'ASSISTANT_EMPTY_RESPONSE',
+      'ASSISTANT_BLOCKED',
+      'ASSISTANT_SENSITIVE_INPUT',
+    };
+    if (assistantCode is String && assistantCodes.contains(assistantCode)) {
+      return assistantCode;
+    }
     // Domain codes require a verified backend contract. A generic 409 does not
     // imply that an appointment slot is unavailable.
     return switch (status) {
@@ -80,6 +100,24 @@ abstract final class ApiErrorHandler {
 
   /// Only locally defined copy is exposed to views, never server error details.
   static String messageFor(String? code) => switch (code) {
+    'ASSISTANT_DISABLED' ||
+    'ASSISTANT_CONFIGURATION_ERROR' ||
+    'ASSISTANT_CONTEXT_TOO_LARGE' =>
+      'The assistant is unavailable. You can still browse services.',
+    'ASSISTANT_RATE_LIMITED' ||
+    'ASSISTANT_DAILY_LIMIT' ||
+    'ASSISTANT_BUSY' ||
+    'ASSISTANT_QUOTA_EXHAUSTED' =>
+      'The assistant request limit was reached. Try later or browse services.',
+    'ASSISTANT_TIMEOUT' => 'The assistant took too long. Please try again.',
+    'ASSISTANT_INVALID_RESPONSE' ||
+    'ASSISTANT_PROVIDER_ERROR' ||
+    'ASSISTANT_EMPTY_RESPONSE' =>
+      'The assistant could not answer reliably. Try again or browse services.',
+    'ASSISTANT_BLOCKED' =>
+      'Please rephrase your question about AutoCare services.',
+    'ASSISTANT_SENSITIVE_INPUT' =>
+      'Remove personal details and credentials before sending.',
     'NOT_CONFIGURED' =>
       'This feature is not connected yet. Please try again later.',
     'NETWORK_ERROR' => 'Check your internet connection and try again.',

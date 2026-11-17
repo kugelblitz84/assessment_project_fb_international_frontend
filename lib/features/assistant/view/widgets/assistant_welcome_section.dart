@@ -39,7 +39,7 @@ class AssistantWelcomeSection extends StatelessWidget {
           ),
           SizedBox(height: AppSize.vertical(16)),
           const Text(
-            'Ask AutoCare about car services, prices, or what your car may need.',
+            'Ask about AutoCare services. Messages are sent to Google Gemini and free-tier data may be used to improve products. Do not share names, emails, credentials, vehicle registrations or other personal information.',
             style: TextStyle(color: AppColors.secondary),
           ),
           SizedBox(height: AppSize.vertical(28)),

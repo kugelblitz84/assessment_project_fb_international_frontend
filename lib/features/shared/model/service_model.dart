@@ -12,6 +12,8 @@ class ServiceModel {
     this.imageUrl,
     this.inclusions = const [],
     this.available = true,
+    this.type = 'INDIVIDUAL',
+    this.originalPrice,
   });
   final String id;
   final String name;
@@ -24,6 +26,9 @@ class ServiceModel {
   final String? imageUrl;
   final List<String> inclusions;
   final bool available;
+  final String type;
+  final num? originalPrice;
+  bool get isPackage => type == 'PACKAGE';
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) => ServiceModel(
     id: json['id'] as String,
@@ -39,5 +44,14 @@ class ServiceModel {
       (json['inclusions'] as List?)?.cast<String>() ?? const [],
     ),
     available: json['available'] as bool? ?? true,
+    type: _serviceType(json['type']),
+    originalPrice: json['originalPrice'] as num?,
   );
+  static String _serviceType(Object? value) {
+    if (value == null) return 'INDIVIDUAL';
+    if (value != 'INDIVIDUAL' && value != 'PACKAGE') {
+      throw const FormatException('Invalid service type.');
+    }
+    return value as String;
+  }
 }

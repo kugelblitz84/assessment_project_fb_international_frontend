@@ -2,8 +2,9 @@
 
 Responsive Flutter car service booking UI, using Riverpod 3, GoRouter, Dio and
 feature-first model/view/controller/service modules. All customer screens are
-implemented. Business features currently use labeled, in-memory sample data;
-backend DTOs will be connected during API integration. No dependencies were added.
+implemented. Authentication, catalog and the Gemini assistant use the live backend by default.
+Booking/profile business adapters still require their remaining HTTP integration.
+An explicit demo target retains in-memory sample data. No frontend dependencies were added.
 
 ## Run locally
 
@@ -26,12 +27,12 @@ The normal entry point preserves real authentication:
 
 ```sh
 flutter pub get
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1
 ```
 
 The default URL reaches the development computer from the Android emulator. Use a
 reachable LAN address on physical devices, or HTTPS for deployed builds. Base paths
-such as `https://example.com/api` are supported. Android allows development HTTP only
+must include `/api/v1`, for example `https://example.com/api/v1`. Android allows development HTTP only
 in debug builds. iOS local transport exceptions require Xcode configuration. Web
 secure storage requires HTTPS or localhost and backend CORS configuration.
 
@@ -185,54 +186,22 @@ domain and Secure flags are handled by cookie_jar. Web uses credentialed request
 browser-managed cookies, rejecting untrusted destinations. Tokens and credentials are
 never logged or displayed.
 
-## Backend contract and limits
+## Backend contract and Gemini assistant
 
-The adjacent `../backend_project` currently exposes only the NestJS starter
-`GET /` route. Business services use `DemoWorkshop` sample responses for UI work,
-as authorized; model JSON keys and payloads are provisional. Every service receives
-the existing configured Dio. With `--dart-define=DEMO_DATA=false`, unintegrated
-operations return an explicit safe error rather than making guessed API calls.
-Replace the demo branches when these contracts are supplied:
+The adjacent backend implements authentication, catalog, packages, offers, availability, appointments and a public Gemini assistant under `/api/v1`. The frontend now connects authentication, catalog and assistant calls. Its remaining booking/profile business adapters still require HTTP wiring; explicit demo mode preserves the complete offline UI.
 
-| Feature area | Missing contract |
-| --- | --- |
-| Service catalogue/details | Routes, envelope, IDs, search/filter parameters, price representation and duration |
-| Booking/history/details | Appointment model, create/list/detail/cancel operations, availability, date/time semantics, statuses and slot conflict code |
-| Profile editing | Update route, accepted fields, response shape and how to refresh the Core session user |
-| Assistant | Request/response messages, conversation handling and references to real catalogue service IDs |
+- Android: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1`.
+- Browser: `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000/api/v1`; allow the exact browser origin in backend CORS configuration.
+- Offline demo: `flutter run -t lib/demo/main_demo.dart`, or opt into business demo data with `--dart-define=DEMO_DATA=true`.
 
-Authentication is already implemented in the frontend against the expectations
-below, but those endpoints are also absent from the local backend starter.
+Default mode uses live endpoints. The backend owns GEMINI_API_KEY and model configuration; no provider key enters Flutter. POST `/assistant/chat` sends at most twelve recent messages and 12,000 characters. Strict response models accept only `serviceDetails` with an actual service/package UUID and `browseServices` with an optional category UUID. Recommendation cards use the refreshed live catalog for images, effective/original prices, duration and View service/View package labels. Navigation uses existing AppRoutes; arbitrary URLs/actions are rejected. Riverpod state, account isolation, retry/clear and stale-response protections remain.
 
-These contracts must be supplied by the separate backend; tests use HTTP adapters,
-not a live server:
+Guest assistant calls use optional authentication; signed-in calls attach the existing access token. Public catalog calls omit credentials. Browser refresh/logout first acquire `/auth/csrf` and send `X-CSRF-Token` with credentialed cookies. The shared coordinator serializes refresh. Native cookie transport needs no browser CSRF header. Production requires HTTPS and secure host-only HttpOnly cookies. Revoked/expired sessions cannot access protected backend APIs. Multiple browser tabs must coordinate refresh to avoid strict replay revocation.
 
-- `POST /auth/login`: `{email, password}`.
-- `POST /auth/register`: `{name, email, password}`.
-- Both return `{accessToken, user: {id, name, email}}` and set a refresh cookie.
-- `GET /auth/me`: bearer authorization, returns `{user: {id, name, email}}`.
-- `POST /auth/refresh`: refresh cookie, returns `{accessToken}` and rotates the cookie.
-- `POST /auth/logout`: revokes/clears the cookie session; returns 200/204.
-- Refresh and logout send no bearer token or refresh-token body. Refresh rejection
-  uses 401. Protected 401s with no code or `ACCESS_TOKEN_EXPIRED` allow renewal;
-  other explicit error codes skip renewal. A second 401 is returned without retry.
-- Required response strings must be nonempty. Invalid shapes and HTTP failures become
-  safe domain errors. Backend authorization must enforce all private business APIs;
-  frontend navigation guards do not replace server authorization.
+Messages go to Google Gemini. Free-tier data may be used to improve products. Do not send names, emails, phones, credentials, vehicle registrations or private appointments. The backend screens common sensitive patterns and supplies public catalog/policy data only; automated screening cannot identify every kind of personal information. No backend chat-history table exists. The assistant cannot create/cancel appointments or provide definitive mechanical diagnoses. This privacy notice also appears in the assistant UI.
 
-Production requires HTTPS, HttpOnly/Secure refresh cookies, an appropriate SameSite
-policy and a narrow cookie path covering refresh/logout. Cross-site web deployments
-need SameSite=None; Secure, exact CORS origins, credential support and preflight support
-for Content-Type/Authorization. Cookie-authenticated mutations require backend CSRF
-protection (Origin/SameSite checks or an agreed CSRF token/header contract).
+Disabled/configuration errors, limits, quota exhaustion, timeout and invalid output use locally defined safe messages. Live model availability still requires a successful configured request; fake-provider tests do not establish it. Browser cookie behavior and native platform persistence also need deployment checks.
 
-The HTTP emulator default cannot send Secure cookies. Use trusted local HTTPS for
-production-like refresh testing. Browser cookie blocking may prevent persistence.
-Browser cookie deletion after failed server logout cannot be guaranteed. Refresh
-rotation/reuse detection and revocation are backend responsibilities; single-flight
-coordination is per provider container, so multiple tabs/processes require backend
-concurrency tolerance or additional coordination. Native device storage, browser
-cookie behavior and iOS compilation still require platform integration validation.
 
 ## Verification
 

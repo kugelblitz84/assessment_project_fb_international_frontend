@@ -6,6 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_depth.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/widgets/service_image.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../home/controller/home_controller.dart';
 import '../../model/assistant_message_model.dart';
@@ -103,6 +104,13 @@ class AssistantRecommendationCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (service.imageUrl != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: ServiceImage(url: service.imageUrl, label: service.name),
+              ),
+              SizedBox(height: AppSize.vertical(8)),
+            ],
             Text(
               service.name,
               style: const TextStyle(fontWeight: FontWeight.w700),
@@ -112,7 +120,13 @@ class AssistantRecommendationCard extends ConsumerWidget {
               '${Formatters.price(service.price, service.currency)} · ${Formatters.duration(service.durationMinutes)}',
             ),
             SizedBox(height: AppSize.vertical(4)),
-            const Text('View service →'),
+            if (service.originalPrice != null &&
+                service.originalPrice! > service.price)
+              Text(
+                Formatters.price(service.originalPrice!, service.currency),
+                style: const TextStyle(decoration: TextDecoration.lineThrough),
+              ),
+            Text(service.isPackage ? 'View package →' : 'View service →'),
           ],
         ),
       ),

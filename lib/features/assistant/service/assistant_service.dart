@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/network/backend_contract_exception.dart';
+import '../../../core/network/api_endpoints.dart';
+import '../../../core/network/request_access.dart';
 import '../../../core/network/dio_provider.dart';
 import '../../shared/service/demo_workshop.dart';
 import '../model/assistant_message_model.dart';
@@ -16,7 +17,21 @@ class AssistantService {
   final Dio dio;
   final DemoWorkshop? demo;
   Future<AssistantMessageModel> send(AssistantRequestPayload payload) async {
-    if (demo == null) throw const BackendContractException();
+    if (demo == null) {
+      final response = await dio.post<Object?>(
+        ApiEndpoints.assistantChat,
+        data: payload.toJson(),
+        options: Options(
+          extra: {requestAccessKey: RequestAccess.optional},
+          receiveTimeout: const Duration(seconds: 65),
+        ),
+      );
+      final json = response.data;
+      if (json is! Map<String, dynamic>) {
+        throw const FormatException('Invalid assistant response.');
+      }
+      return AssistantMessageModel.fromJson(json);
+    }
     await demo!.pause();
     final prompt = payload.messages.last.text.toLowerCase();
     final ids = switch (prompt) {

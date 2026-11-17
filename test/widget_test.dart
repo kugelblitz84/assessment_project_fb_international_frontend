@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'dart:async';
 
 import 'package:assessment_project_fb_international_frontend/app.dart';
@@ -24,6 +25,7 @@ void main() {
 
   ProviderContainer createContainer() => ProviderContainer.test(
     overrides: [
+      demoModeProvider.overrideWithValue(true),
       tokenStorageProvider.overrideWithValue(storage),
       authRepositoryProvider.overrideWithValue(repository),
     ],

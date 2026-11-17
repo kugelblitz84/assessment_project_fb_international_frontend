@@ -1,3 +1,4 @@
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'dart:async';
 import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
@@ -258,12 +259,38 @@ void main() {
   );
 
   test(
-    'disabling demo data fails explicitly instead of guessing HTTP endpoints',
+    'disabling demo data loads the implemented catalog HTTP contract',
     () async {
       final container = demoContainer(demoData: false);
+      final dio = container.read(dioProvider);
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            expect(options.path, '/services');
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: [
+                  {
+                    'id': 'live-service',
+                    'name': 'Live wash',
+                    'description': 'Live catalog',
+                    'categoryId': 'live-category',
+                    'categoryName': 'Cleaning',
+                    'price': 650,
+                    'currency': 'BDT',
+                    'durationMinutes': 45,
+                  },
+                ],
+              ),
+            );
+          },
+        ),
+      );
       final state = await container.read(catalogControllerProvider.future);
-      expect(state.services, isEmpty);
-      expect(state.errorCode, 'NOT_CONFIGURED');
+      expect(state.services.single.id, 'live-service');
+      expect(state.errorCode, isNull);
     },
   );
 
