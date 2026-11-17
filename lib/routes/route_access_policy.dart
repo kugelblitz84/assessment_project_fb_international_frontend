@@ -2,7 +2,6 @@ import 'app_routes.dart';
 
 /// Shared route classification and validation for all internal return locations.
 abstract final class RouteAccessPolicy {
-  static final _service = RegExp(r'^/services/[^/]+$');
   static final _booking = RegExp(r'^/services/[^/]+/book$');
   static final _bookingDetails = RegExp(r'^/bookings/[^/]+(?:/confirmation)?$');
 
@@ -16,6 +15,15 @@ abstract final class RouteAccessPolicy {
     if (value == null ||
         value.isEmpty ||
         RegExp(r'[\\\x00-\x20\x7f]').hasMatch(value)) {
+      return null;
+    }
+    // Check before Uri parsing normalizes dot segments away.
+    try {
+      for (final segment in value.split('?').first.split('/')) {
+        final decoded = Uri.decodeComponent(segment);
+        if (decoded == '.' || decoded == '..') return null;
+      }
+    } on FormatException {
       return null;
     }
     final uri = Uri.tryParse(value);
@@ -40,14 +48,7 @@ abstract final class RouteAccessPolicy {
       return null;
     }
     final path = uri.path;
-    if (requiresAuthentication(path) ||
-        _service.hasMatch(path) ||
-        [
-          AppRoutes.homePath,
-          AppRoutes.profilePath,
-          AppRoutes.assistantPath,
-          AppRoutes.notFoundPath,
-        ].contains(path)) {
+    if (requiresAuthentication(path)) {
       return uri.toString();
     }
     return null;

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/session/application/current_user_provider.dart';
 import '../../../../core/session/application/session_controller.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../core/session/domain/auth_state.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -61,6 +62,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               child: Text(_loggingOut ? 'Logging out...' : 'Log out'),
             ),
           ] else ...[
+            if (ref.watch(sessionProvider).asData?.value case Unauthenticated(
+              message: final String message,
+            ))
+              Semantics(liveRegion: true, child: Text(message)),
             const Text('Browse AutoCare as a guest.'),
             FilledButton(
               onPressed: () => context.goNamed(AppRoutes.login),

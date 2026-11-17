@@ -19,27 +19,21 @@ such as `https://example.com/api` are supported. Android allows development HTTP
 in debug builds. iOS local transport exceptions require Xcode configuration. Web
 secure storage requires HTTPS or localhost and backend CORS configuration.
 
-## Navigation and onboarding
+## Navigation
 
-- First launch: Bootstrap → Onboarding → Home. Skip and Get Started both persist
-  `autocare.onboarding.complete` with the existing SharedPreferences dependency.
-- Later launches: Bootstrap → Home. Logout leaves onboarding completion intact.
-- Bootstrap waits for both onboarding initialization and session restoration.
-  Preference-loading errors show a retry screen. Session restoration failures allow
-  guest browsing, preserve potentially valid credentials and offer retry in Profile.
-- Guests can browse Home, Service Details, AI Assistant and Profile. Guest Profile
-  offers Login and Create Account. Authenticated Profile shows user details, Edit
-  Profile and Logout.
-- Booking creation, confirmation, history, details and profile editing require auth.
-  Direct URLs and deep links use the same guards as in-app navigation.
-- GoRouter alone controls authentication redirects. Protected destinations survive
-  bootstrap, onboarding and switching between Login and Register. Successful auth
-  returns to that destination, including encoded identifiers and query parameters.
-- Redirect values must identify recognized internal application routes. External
-  URLs, auth/bootstrap/onboarding destinations, fragments, malformed encodings,
-  encoded separators, traversal and ambiguous redirect parameters are rejected.
-- Logout returns to guest Home. Session expiry clears the current user and protects
-  private routes while leaving public routes available. Unknown URLs show Not Found.
+App shows a loading screen while session restoration is unresolved, keeping the
+Router subtree unmounted so protected pages cannot start private requests.
+GoRouter stays stable, preserves deep links and defaults to Home. Restoration
+errors allow guest browsing and preserve credentials; Profile offers retry.
+
+Guests can browse Home, services, Profile and AI Assistant. Booking routes and
+profile editing require authentication. Only recognized protected routes are valid
+return destinations. Login/Register preserve that destination or default to Home.
+Logout rebuilds Profile in guest mode; invalidation on private routes goes to Login.
+Malformed, external, ambiguous and traversal redirects remain rejected.
+
+Feature caching and background refresh stay independent of routing.
+SharedPreferences is retained for future caching; caching is not implemented.
 
 Route names and identifier parameters are centralized in `lib/routes/app_routes.dart`;
 registration is in `app_pages.dart`, access rules and redirect validation in
@@ -47,8 +41,6 @@ registration is in `app_pages.dart`, access rules and redirect validation in
 
 | Page | Name | Path | Access |
 | --- | --- | --- | --- |
-| Bootstrap | `bootstrap` | `/` | Initialization |
-| Onboarding | `onboarding` | `/onboarding` | Until completed |
 | Login | `login` | `/login` | Guest |
 | Register | `register` | `/register` | Guest |
 | Home | `home` | `/home` | Public |
@@ -60,7 +52,6 @@ registration is in `app_pages.dart`, access rules and redirect validation in
 | Profile | `profile` | `/profile` | Public |
 | Edit profile | `editProfile` | `/profile/edit` | Authenticated |
 | AI assistant | `assistant` | `/assistant` | Public |
-| Bootstrap error | `bootstrapError` | `/bootstrap-error` | Preference initialization error |
 | Not found | `notFound` | `/not-found` | Public |
 
 ## Session architecture
@@ -155,50 +146,9 @@ coordination is per provider container, so multiple tabs/processes require backe
 concurrency tolerance or additional coordination. Native device storage, browser
 cookie behavior and iOS compilation still require platform integration validation.
 
-## Migration inventory
-
-Created:
-
-- `lib/core/onboarding/onboarding_provider.dart`
-- `lib/features/onboarding/presentation/pages/onboarding_page.dart`
-- `lib/routes/route_access_policy.dart`
-- `lib/core/network/request_access.dart`
-
-Modified:
-
-- `lib/routes/{app_routes,app_pages,router_provider}.dart`
-- `lib/core/network/{auth_interceptor,backend_policy,cookie_transport_native,cookie_transport_web}.dart`
-- `lib/core/session/application/session_controller.dart`
-- `lib/core/session/domain/auth_state.dart`
-- `lib/core/session/presentation/bootstrap_errorpage.dart`
-- `lib/features/auth/presentation/pages/{login_page,register_page}.dart`
-- `lib/features/profile/presentation/pages/profile_page.dart`
-- `test/{widget_test,session_controller_test,refresh_integration_test}.dart`
-- `test/support/session_fakes.dart`
-- `README.md`
-
-No files were renamed or removed. Removed legacy behavior: blanket login guards,
-unconditional native refresh probes, global session-error navigation blocking public
-routes, discarded booking destinations, auth-only Profile controls, and conflicting
-README descriptions of local-only logout and missing refresh support. Existing
-Riverpod, GoRouter, Dio, cookie storage and refresh coordination are retained.
-
 ## Verification
 
-```sh
-dart format lib test
-flutter analyze
-flutter test
-```
-
-Unit/widget/adapter tests cover both onboarding completion actions and restart
-persistence, public/protected routing, intended booking restoration after login and
-registration, invalid redirects, guest Profile, logout Home, public API access after
-logout and expiry, failed restoration/retry, native cookie-only restoration,
-browser-style invisible-cookie restoration, token persistence, response contracts,
-bearer/cookie isolation, concurrent refresh and stale refresh results after logout.
-Secure storage and preferences use platform mocks; there is no live backend test.
-
-Final validation: `dart format lib test` passed (51 files); `flutter analyze`
-reported no issues; `flutter test` passed all 38 tests. No files were renamed,
-removed, committed or pushed.
+Run `dart format lib test`, `flutter analyze`, and `flutter test`.
+Tests cover startup loading and deep links, guest/private access, return destinations,
+logout, restoration retry, redirect security, cookies and concurrent token refresh.
+Storage uses platform mocks; live backend and platform integration remain separate.

@@ -10,7 +10,6 @@ class Authenticated extends AuthState {
 }
 
 class Unauthenticated extends AuthState {
-  const Unauthenticated({this.message, this.didLogout = false});
+  const Unauthenticated({this.message});
   final String? message;
-  final bool didLogout;
 }

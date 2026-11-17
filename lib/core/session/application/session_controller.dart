@@ -137,9 +137,7 @@ class SessionController extends AsyncNotifier<AuthState> {
     await storage.clearToken();
     await ref.read(cookieTransportProvider).clear();
     if (ref.mounted) {
-      state = AsyncData(
-        Unauthenticated(message: failure?.toString(), didLogout: true),
-      );
+      state = AsyncData(Unauthenticated(message: failure?.toString()));
     }
   }
 }

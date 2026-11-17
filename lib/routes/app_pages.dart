@@ -1,8 +1,6 @@
 import 'package:go_router/go_router.dart';
 
 import '../core/navigation/presentation/not_found_page.dart';
-import '../core/session/presentation/bootstrap_errorpage.dart';
-import '../core/session/presentation/bootstrap_view.dart';
 import '../features/assistant/presentation/pages/ai_assistant_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
@@ -15,24 +13,8 @@ import '../features/profile/presentation/pages/edit_profile_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/services/presentation/pages/service_details_page.dart';
 import 'app_routes.dart';
-import '../features/onboarding/presentation/pages/onboarding_page.dart';
 
 final appPages = <RouteBase>[
-  GoRoute(
-    name: AppRoutes.onboarding,
-    path: AppRoutes.onboardingPath,
-    builder: (context, state) => const OnboardingPage(),
-  ),
-  GoRoute(
-    name: AppRoutes.bootstrap,
-    path: AppRoutes.bootstrapPath,
-    builder: (context, state) => const BootstrapView(),
-  ),
-  GoRoute(
-    name: AppRoutes.bootstrapError,
-    path: AppRoutes.bootstrapErrorPath,
-    builder: (context, state) => const BootstrapErrorPage(),
-  ),
   GoRoute(
     name: AppRoutes.login,
     path: AppRoutes.loginPath,

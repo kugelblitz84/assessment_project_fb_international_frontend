@@ -1,8 +1,4 @@
 abstract final class AppRoutes {
-  static const bootstrap = 'bootstrap';
-  static const bootstrapPath = '/';
-  static const onboarding = 'onboarding';
-  static const onboardingPath = '/onboarding';
   static const login = 'login';
   static const loginPath = '/login';
   static const register = 'register';
@@ -25,8 +21,6 @@ abstract final class AppRoutes {
   static const editProfilePath = '/profile/edit';
   static const assistant = 'assistant';
   static const assistantPath = '/assistant';
-  static const bootstrapError = 'bootstrapError';
-  static const bootstrapErrorPath = '/bootstrap-error';
   static const notFound = 'notFound';
   static const notFoundPath = '/not-found';
 

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:assessment_project_fb_international_frontend/app.dart';
-import 'package:assessment_project_fb_international_frontend/core/onboarding/onboarding_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'support/session_fakes.dart';
 
@@ -32,9 +31,6 @@ void main() {
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({});
-    SharedPreferences.setMockInitialValues({
-      OnboardingController.completionKey: true,
-    });
     storage = MemoryTokenStorage();
     repository = StubAuthRepository();
     container = createContainer();
@@ -44,27 +40,76 @@ void main() {
     UncontrolledProviderScope(container: container, child: const App()),
   );
 
-  for (final action in ['Skip', 'Get Started']) {
-    testWidgets(
-      'first launch completes onboarding with $action and persists across restarts',
-      (tester) async {
-        SharedPreferences.setMockInitialValues({});
-        await launch(tester);
+  testWidgets(
+    'authenticated startup deep link stays unmounted until restoration completes; retry and invalidation remain guarded',
+    (tester) async {
+      storage.token = 'saved';
+      repository.currentUserGate = Completer<UserEntity>();
+      tester.binding.platformDispatcher.defaultRouteNameTestValue =
+          '/services/123/book?slot=morning';
+      addTearDown(
+        tester.binding.platformDispatcher.clearDefaultRouteNameTestValue,
+      );
+      await launch(tester);
+      await tester.pump();
+      final router = container.read(routerProvider);
+      expect(find.text('Starting AutoCare...'), findsOneWidget);
+      expect(find.byType(BookingPage), findsNothing);
+      repository.currentUserGate!.complete(testUser);
+      await tester.pumpAndSettle();
+      expect(find.byType(BookingPage), findsOneWidget);
+      expect(
+        router.routeInformationProvider.value.uri.queryParameters['slot'],
+        'morning',
+      );
+      repository.currentUserGate = Completer<UserEntity>();
+      container.invalidate(sessionProvider);
+      await tester.pump();
+      expect(find.byType(BookingPage), findsNothing);
+      expect(find.text('Starting AutoCare...'), findsOneWidget);
+      repository.currentUserGate!.complete(testUser);
+      await tester.pumpAndSettle();
+      expect(container.read(routerProvider), same(router));
+      expect(find.byType(BookingPage), findsOneWidget);
+      container.read(tokenRefreshCoordinatorProvider).onInvalidSession!();
+      await tester.pumpAndSettle();
+      expect(find.text('Log in to AutoCare'), findsOneWidget);
+      expect(find.byType(BookingPage), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'ordinary login goes Home and authenticated users cannot revisit auth pages',
+    (tester) async {
+      await launch(tester);
+      await tester.pumpAndSettle();
+      final router = container.read(routerProvider);
+      router.go('/login');
+      await tester.pumpAndSettle();
+      await container
+          .read(sessionProvider.notifier)
+          .login(email: testUser.email, password: 'password');
+      await tester.pumpAndSettle();
+      for (final path in ['/login', '/register']) {
+        router.go(path);
         await tester.pumpAndSettle();
-        expect(find.text('Welcome to AutoCare'), findsOneWidget);
-        await tester.tap(find.text(action));
+        expect(router.routeInformationProvider.value.uri.path, '/home');
+      }
+      for (final path in [
+        '/bookings',
+        '/bookings/42',
+        '/bookings/42/confirmation',
+        '/profile/edit',
+      ]) {
+        router.go(path);
         await tester.pumpAndSettle();
-        expect(find.text('Welcome'), findsOneWidget);
-        expect(repository.refreshCalls, 0);
-        await tester.pumpWidget(const SizedBox());
-        container = createContainer();
-        await launch(tester);
-        await tester.pumpAndSettle();
-        expect(find.text('Welcome'), findsOneWidget);
-        expect(find.text('Welcome to AutoCare'), findsNothing);
-      },
-    );
-  }
+        expect(router.routeInformationProvider.value.uri.path, path);
+      }
+      router.go('/missing-page');
+      await tester.pumpAndSettle();
+      expect(find.text('Page not found'), findsOneWidget);
+    },
+  );
 
   testWidgets(
     'guests browse all public routes and protected deep links require login',
@@ -110,12 +155,11 @@ void main() {
 
   for (final register in [false, true]) {
     testWidgets(
-      'booking intent survives bootstrap, onboarding, auth switching and ${register ? 'registration' : 'login'}',
+      'booking intent survives startup and auth switching and ${register ? 'registration' : 'login'}',
       (tester) async {
-        SharedPreferences.setMockInitialValues({});
         storage.token = 'saved';
         repository.currentUserGate = Completer<UserEntity>();
-        // Hold initialization, then request a deep link while bootstrap is active.
+        // Hold restoration while a protected deep link is requested.
         await launch(tester);
         await tester.pump();
         final router = container.read(routerProvider);
@@ -123,12 +167,11 @@ void main() {
         router.go(target);
         await tester.pump();
         expect(find.text('Starting AutoCare...'), findsOneWidget);
+        expect(find.byType(BookingPage), findsNothing);
+        expect(container.read(routerProvider), same(router));
         repository.currentUserGate!.completeError(
           const InvalidSessionException(),
         );
-        await tester.pumpAndSettle();
-        expect(find.text('Welcome to AutoCare'), findsOneWidget);
-        await tester.tap(find.text('Skip'));
         await tester.pumpAndSettle();
         expect(find.text('Log in to AutoCare'), findsOneWidget);
         await tester.tap(find.text('Create an account'));
@@ -167,29 +210,22 @@ void main() {
     );
   }
 
-  testWidgets(
-    'logout goes Home, clears user state and never repeats onboarding',
-    (tester) async {
-      storage.token = 'saved';
-      await launch(tester);
-      await tester.pumpAndSettle();
-      final router = container.read(routerProvider);
-      router.goNamed(AppRoutes.profile);
-      await tester.pumpAndSettle();
-      expect(find.text('Email: customer@example.com'), findsOneWidget);
-      await tester.tap(find.text('Log out'));
-      await tester.pumpAndSettle();
-      expect(storage.token, isNull);
-      expect(router.routeInformationProvider.value.uri.path, '/home');
-      expect(find.text('Welcome'), findsOneWidget);
-      router.go('/profile');
-      await tester.pumpAndSettle();
-      expect(find.text('Login'), findsOneWidget);
-      router.go('/onboarding');
-      await tester.pumpAndSettle();
-      expect(find.text('Welcome'), findsOneWidget);
-    },
-  );
+  testWidgets('logout clears user state and displays guest Profile', (
+    tester,
+  ) async {
+    storage.token = 'saved';
+    await launch(tester);
+    await tester.pumpAndSettle();
+    final router = container.read(routerProvider);
+    router.goNamed(AppRoutes.profile);
+    await tester.pumpAndSettle();
+    expect(find.text('Email: customer@example.com'), findsOneWidget);
+    await tester.tap(find.text('Log out'));
+    await tester.pumpAndSettle();
+    expect(storage.token, isNull);
+    expect(router.routeInformationProvider.value.uri.path, '/profile');
+    expect(find.text('Login'), findsOneWidget);
+  });
 
   testWidgets(
     'failed restoration retains credentials and allows guest browsing and retry',
@@ -225,7 +261,7 @@ void main() {
         '/login',
         '/register',
         '/',
-        '/onboarding',
+        '/profile',
         '/unknown',
         '/services/%2F/book',
       ]) {
@@ -277,8 +313,8 @@ void main() {
         '/login?redirect=/home',
         '/register',
         '/',
-        '/bootstrap-error',
-        '/onboarding',
+        '/home',
+        '/profile',
         '/missing',
         '/services/%2f/book',
         '/services/%5c/book',
@@ -286,6 +322,10 @@ void main() {
         '/services/%252f/book',
         '/services/%FF/book',
         '/services/../book',
+        '/services/../services/123/book',
+        '/services/%2e%2e/services/123/book',
+        '/services/123',
+        '/assistant',
         '/home#fragment',
         'home',
         '/home\n',
