@@ -1,5 +1,10 @@
 abstract final class ApiEndpoints {
   static const profile = '/users/me';
+  static const appointments = '/appointments';
+  static String availability(String id) =>
+      '${resource(services, id)}/availability';
+  static String cancelAppointment(String id) =>
+      '${resource(appointments, id)}/cancel';
   static const adminDashboard = '/admin/dashboard';
   static const adminCategories = '/admin/categories';
   static const adminServices = '/admin/services';

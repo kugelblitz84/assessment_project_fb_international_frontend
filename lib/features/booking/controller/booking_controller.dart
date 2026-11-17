@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/api_error_handler.dart';
+import '../../../core/utils/workshop_calendar.dart';
 import '../../../core/session/application/session_controller.dart';
 import '../../../core/session/application/session_identity_provider.dart';
 import '../../../core/session/domain/auth_state.dart';
@@ -18,8 +19,7 @@ class BookingController extends AsyncNotifier<BookingState> {
   final String serviceId;
   int _request = 0;
   DateTime get firstBookableDate => ref.read(bookingServiceProvider).today;
-  DateTime get lastBookableDate =>
-      firstBookableDate.add(const Duration(days: 365));
+  DateTime get lastBookableDate => WorkshopCalendar.lastDate(firstBookableDate);
 
   @override
   Future<BookingState> build() async {
@@ -176,7 +176,9 @@ class BookingController extends AsyncNotifier<BookingState> {
     final uncertain =
         result.errorCode == 'TIMEOUT' ||
         result.errorCode == 'NETWORK_ERROR' ||
-        result.errorCode == 'SERVER_ERROR';
+        result.errorCode == 'SERVER_ERROR' ||
+        result.errorCode == 'INVALID_RESPONSE' ||
+        result.errorCode == 'UNEXPECTED_ERROR';
     state = AsyncData(
       current.copyWith(
         submitting: false,
@@ -184,6 +186,7 @@ class BookingController extends AsyncNotifier<BookingState> {
         uncertain: uncertain,
       ),
     );
+    if (uncertain) ref.invalidate(appointmentsControllerProvider);
     if (result.errorCode == 'CONFLICT') {
       // Generic conflicts do not claim a particular backend domain error.
       await _loadAvailability(current.date, preserveSelection: false);

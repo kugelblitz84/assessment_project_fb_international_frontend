@@ -12,6 +12,8 @@ class AppointmentModel {
     required this.price,
     required this.currency,
     required this.durationMinutes,
+    this.originalPrice,
+    this.canCancel = false,
   });
   final String id;
   final String serviceId;
@@ -21,8 +23,8 @@ class AppointmentModel {
   final num price;
   final String currency;
   final int durationMinutes;
-
-  bool get canCancel => status == BookingStatus.pending;
+  final num? originalPrice;
+  final bool canCancel;
   bool get upcoming =>
       (status == BookingStatus.pending || status == BookingStatus.confirmed) &&
       slot.startsAt.isAfter(DateTime.now());
@@ -36,6 +38,8 @@ class AppointmentModel {
     price: price,
     currency: currency,
     durationMinutes: durationMinutes,
+    originalPrice: originalPrice,
+    canCancel: status != null && status != this.status ? false : canCancel,
   );
 
   factory AppointmentModel.fromJson(Map<String, dynamic> json) =>
@@ -48,5 +52,14 @@ class AppointmentModel {
         price: json['price'] as num,
         currency: json['currency'] as String,
         durationMinutes: json['durationMinutes'] as int,
+        originalPrice: json['originalPrice'] as num?,
+        canCancel: _readCanCancel(json),
       );
+
+  static bool _readCanCancel(Map<String, dynamic> json) {
+    if (json['canCancel'] is! bool) {
+      throw const FormatException('Missing cancellation eligibility.');
+    }
+    return json['canCancel'] as bool;
+  }
 }

@@ -87,6 +87,8 @@ abstract final class ApiErrorHandler {
       409 => 'CONFLICT',
       413 => 'IMAGE_TOO_LARGE',
       429 => 'RATE_LIMITED',
+      503 when error.requestOptions.path == '/admin/media/images' =>
+        'IMAGE_UPLOAD_UNAVAILABLE',
       _ when status != null && status >= 500 => 'SERVER_ERROR',
       _ => 'UNEXPECTED_ERROR',
     };
@@ -125,6 +127,8 @@ abstract final class ApiErrorHandler {
     'TIMEOUT' => 'The request took too long. Please try again.',
     'VALIDATION_ERROR' => 'Please check the information you entered.',
     'IMAGE_TOO_LARGE' => 'Choose an image no larger than 2 MB.',
+    'IMAGE_UPLOAD_UNAVAILABLE' =>
+      'Image upload is unavailable. Your previous image is preserved. Try again later or contact the workshop administrator.',
     'UNAUTHORIZED' => 'Please sign in again to continue.',
     'FORBIDDEN' => 'You do not have permission to perform this action.',
     'NOT_FOUND' => 'The requested information could not be found.',

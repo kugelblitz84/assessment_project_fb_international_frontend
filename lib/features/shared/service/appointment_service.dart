@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/network/backend_contract_exception.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/dio_provider.dart';
 import '../model/create_booking_payload.dart';
 import '../model/appointment_model.dart';
@@ -20,13 +20,26 @@ class AppointmentService {
   final DemoWorkshop? demo;
 
   Future<List<AppointmentModel>> getBookings(String userId) async {
-    if (demo == null) throw const BackendContractException();
+    if (demo == null) {
+      final response = await dio.get<List<dynamic>>(ApiEndpoints.appointments);
+      return List.unmodifiable(
+        response.data!.map(
+          (row) =>
+              AppointmentModel.fromJson(Map<String, dynamic>.from(row as Map)),
+        ),
+      );
+    }
     await demo!.pause();
     return demo!.appointments(userId);
   }
 
   Future<AppointmentModel> getBooking(String userId, String id) async {
-    if (demo == null) throw const BackendContractException();
+    if (demo == null) {
+      final response = await dio.get<Map<String, dynamic>>(
+        ApiEndpoints.resource(ApiEndpoints.appointments, id),
+      );
+      return AppointmentModel.fromJson(response.data!);
+    }
     await demo!.pause();
     return demo!.appointment(userId, id) ?? (throw _failure(404));
   }
@@ -35,19 +48,30 @@ class AppointmentService {
     String userId,
     CreateBookingPayload payload,
   ) async {
-    if (demo == null) throw const BackendContractException();
+    if (demo == null) {
+      final response = await dio.post<Map<String, dynamic>>(
+        ApiEndpoints.appointments,
+        data: payload.toJson(),
+      );
+      return AppointmentModel.fromJson(response.data!);
+    }
     await demo!.pause();
     return demo!.create(userId, payload.serviceId, payload.slotId) ??
         (throw _failure(409));
   }
 
   Future<AppointmentModel> cancel(String userId, String id) async {
-    if (demo == null) throw const BackendContractException();
+    if (demo == null) {
+      final response = await dio.patch<Map<String, dynamic>>(
+        ApiEndpoints.cancelAppointment(id),
+      );
+      return AppointmentModel.fromJson(response.data!);
+    }
     await demo!.pause();
     return demo!.cancel(userId, id) ?? (throw _failure(409));
   }
 
-  // Demo failures exercise the same central HTTP mapping as the future API.
+  // Demo failures exercise the same central HTTP mapping as the live API.
   DioException _failure(int status) {
     final request = RequestOptions(path: 'demo://appointments');
     return DioException.badResponse(

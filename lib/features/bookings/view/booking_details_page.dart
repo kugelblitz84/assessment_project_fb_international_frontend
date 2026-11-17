@@ -102,6 +102,11 @@ class BookingDetailsPage extends ConsumerWidget {
                           SizedBox(height: AppSize.vertical(24)),
                           const Divider(),
                           AppointmentInfo(appointment: booking),
+                          if (!booking.canCancel)
+                            const InlineNotice(
+                              message:
+                                  'This appointment cannot be cancelled online. Contact the workshop if you need help.',
+                            ),
                           if (data.errorCode != null) ...[
                             SizedBox(height: AppSize.vertical(16)),
                             InlineNotice(

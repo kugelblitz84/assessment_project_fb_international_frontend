@@ -189,7 +189,7 @@ never logged or displayed.
 
 ## Backend contract and Gemini assistant
 
-The adjacent backend implements authentication, catalog, packages, offers, availability, appointments and a public Gemini assistant under `/api/v1`. The frontend connects authentication, catalog, assistant, profile updates and administration. Its customer booking adapter still requires HTTP wiring; explicit demo mode preserves the complete offline UI.
+The adjacent backend implements authentication, catalog, packages, offers, availability, appointments and a public Gemini assistant under `/api/v1`. The frontend connects authentication, catalog, assistant, profile updates, administration and the customer availability/appointment journey. Explicit demo mode preserves the complete offline UI.
 
 - Android: `flutter run --dart-define=API_BASE_URL=http://10.0.2.2:3000/api/v1`.
 - Browser: `flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:3000/api/v1`; allow the exact browser origin in backend CORS configuration.
@@ -258,9 +258,66 @@ Mutations refresh affected admin/public catalog or appointment providers.
 See [admin implementation and verification](docs/admin_implementation.md) for the
 endpoint contract, changed files, test coverage and remaining deployment checks.
 
+## Live customer booking integration
+
+Select a live catalog service, choose a date and an available backend slot, review
+the request and submit once. Acknowledgement and My Bookings load the saved
+appointment, including its snapshot price, duration, name and current status.
+Pending and confirmed remain distinct. Cancellation uses the backend's `canCancel`
+decision; unavailable cancellation directs the customer to workshop support.
+
+Workshop dates and time labels use Asia/Dhaka (UTC+06:00), independently of the
+device timezone. The picker includes today and the following 29 calendar days.
+If the backend changes `BOOKING_HORIZON_DAYS`, supply the same public configuration
+to Flutter with `--dart-define=BOOKING_HORIZON_DAYS=30` (supported range 1–90).
+The current backend does not expose its configured horizon through a public API,
+so keep the deployment values aligned. Slot UUIDs come from availability; no live
+slots are generated in Flutter.
+
+HTTP 409 refreshes availability and clears the selection. A timeout, connection
+failure, server failure or unreadable creation response leaves the result uncertain:
+the app refreshes My Bookings and offers **Check my bookings**. It does not submit
+the creation request again. Check the saved appointments before starting a new
+booking. Cancellation and successful creation also refresh appointment providers.
+
+## Cloudinary compatibility and payment readiness
+
+Image selection and upload continue through authenticated `POST /admin/media/images`
+using multipart field `file`, JPEG/PNG/WebP and the existing 2 MiB limit. The returned
+absolute `imageUrl` is used unchanged, including Cloudinary HTTPS URLs and legacy
+backend URLs. Existing previews, thumbnails and public images have loading/error
+fallbacks. Failed uploads retain the previous image; HTTP 503 now explains that
+uploads are unavailable. No Cloudinary SDK, keys or direct upload logic is needed.
+The inspected backend still stores images in PostgreSQL; its planned Cloudinary
+migration and actual browser delivery require separate live verification.
+
+Hosted payments are **not implemented** in this revision. Neither the inspected
+local backend nor GitHub's current `master` contains the finalized payment module,
+`docs/payment-api.md` or `docs/cloudinary-integration.md`. Payment endpoints, enum
+values, contact schema, idempotency, gateway host allowlist, cancellation restrictions
+and admin payment DTOs must be confirmed before implementing checkout. Booking
+remains available without gateway credentials; the app does not claim a payment
+was made or expose speculative checkout actions.
+
+The required future hosted flow is to pay an existing appointment, launch only a
+validated backend-returned SSLCOMMERZ checkout URL, then fetch/reconcile backend
+status on return. Returning from the browser must never itself imply success.
+Retry must first inspect existing attempts and respect backend permission. Only
+backend sandbox credentials may be used for payment verification, with no gateway
+secrets in Flutter. Customer checkout/status UI, bounded polling, session isolation,
+admin payment management and their automated/live tests remain outstanding.
+
+See [the final integration report](docs/final_integration_report.md) for exact scope,
+verification and deployment requirements.
+
 ## Verification
 
-Latest admin implementation checks: 149 tests passed (four opt-in screenshot tests
+Latest customer integration checks: 162 tests passed (four optional screenshot
+tests skipped), no analyzer issues, Android debug APK and web builds passed.
+Thirteen new tests use mocked Dio transport. The local backend health endpoint
+was unreachable; live booking, Cloudinary and payment verification is outstanding.
+
+Previous admin implementation checks: 149 tests passed (four opt-in screenshot tests
 skipped), no analyzer issues, Android debug APK and web builds passed. Admin visual
 capture passed separately for mobile and desktop. All 161 Dart source/test files
 pass formatting. `dart format .` encounters a Windows path error inside generated

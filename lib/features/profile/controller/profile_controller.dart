@@ -26,6 +26,8 @@ class ProfileController extends Notifier<ProfileState> {
     final session = ref.read(sessionProvider).asData?.value;
     if (state.saving || session is! Authenticated) return false;
     if (payload.name.trim().isEmpty ||
+        payload.name.trim().length > 160 ||
+        payload.email.trim().length > 320 ||
         Validators.email(payload.email) != null) {
       state = const ProfileState(errorCode: 'VALIDATION_ERROR');
       return false;
