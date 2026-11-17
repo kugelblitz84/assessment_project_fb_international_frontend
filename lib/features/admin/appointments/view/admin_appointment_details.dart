@@ -53,6 +53,8 @@ class _AdminAppointmentDetailsState
           Text('Start: ${WorkshopTime.input(item.startsAt)} (Asia/Dhaka)'),
           Text('End: ${WorkshopTime.input(item.endsAt)} (Asia/Dhaka)'),
           Text('Status: ${item.status.name}'),
+          Text('Payment: ${item.paymentStatus.label}'),
+          Text('Payment method: ${item.paymentMethod ?? 'None'}'),
           Text('Duration: ${Formatters.duration(item.durationMinutes)}'),
           Text('Charged price: ${Formatters.price(item.price, item.currency)}'),
           Text(

@@ -1,5 +1,6 @@
 import '../../../shared/model/appointment_model.dart';
 import '../../../shared/model/service_model.dart';
+import '../../../shared/model/payment_summary.dart';
 
 typedef Json = Map<String, dynamic>;
 
@@ -96,7 +97,14 @@ class AdminAppointment {
       vehicle = json['vehicle'] == null
           ? null
           : Map<String, dynamic>.from(json['vehicle'] as Map),
-      appliedOfferId = json['appliedOfferId'] as String?;
+      appliedOfferId = json['appliedOfferId'] as String?,
+      paymentStatus = PaymentSummary.parse(json['paymentStatus'] as String),
+      paymentMethod = paymentMethodFromJson(json['paymentMethod']),
+      canPayOnline = json['canPayOnline'] as bool,
+      canCancel = json['canCancel'] as bool;
+  final PaymentSummary paymentStatus;
+  final String? paymentMethod;
+  final bool canPayOnline, canCancel;
   final String id, serviceName, customerName, customerEmail, currency;
   final BookingStatus status;
   final DateTime startsAt, endsAt, createdAt;
@@ -105,14 +113,20 @@ class AdminAppointment {
   final int durationMinutes;
   final Json? vehicle;
   final String? appliedOfferId;
-  List<BookingStatus> actionsAt(DateTime now) => switch (status) {
-    BookingStatus.pending => [BookingStatus.confirmed, BookingStatus.cancelled],
-    BookingStatus.confirmed => [
-      if (!now.isBefore(endsAt)) BookingStatus.completed,
-      BookingStatus.cancelled,
-    ],
-    _ => [],
-  };
+  List<BookingStatus> actionsAt(DateTime now) =>
+      paymentStatus == PaymentSummary.reviewRequired
+      ? []
+      : switch (status) {
+          BookingStatus.pending => [
+            BookingStatus.confirmed,
+            if (canCancel) BookingStatus.cancelled,
+          ],
+          BookingStatus.confirmed => [
+            if (!now.isBefore(endsAt)) BookingStatus.completed,
+            if (canCancel) BookingStatus.cancelled,
+          ],
+          _ => [],
+        };
 }
 
 /// The backend workshop uses Asia/Dhaka (UTC+06, no daylight saving).

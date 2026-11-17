@@ -57,6 +57,13 @@ class AppointmentInfo extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       DetailLine(
+        label: 'Payment status',
+        value: appointment.paymentStatus.label,
+        icon: Icons.payments_outlined,
+      ),
+      if (appointment.paymentMethod != null)
+        DetailLine(label: 'Payment method', value: appointment.paymentMethod!),
+      DetailLine(
         label: 'Booking reference',
         value: appointment.id,
         icon: Icons.tag,

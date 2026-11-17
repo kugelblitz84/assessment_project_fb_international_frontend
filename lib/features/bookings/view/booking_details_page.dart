@@ -14,6 +14,7 @@ import '../../../routes/app_routes.dart';
 import '../../shared/controller/appointments_controller.dart';
 import '../../shared/view/appointment_info.dart';
 import '../../shared/view/booking_status_badge.dart';
+import '../../payments/view/payment_actions.dart';
 
 class BookingDetailsPage extends ConsumerWidget {
   const BookingDetailsPage({super.key, required this.bookingId});
@@ -102,6 +103,7 @@ class BookingDetailsPage extends ConsumerWidget {
                           SizedBox(height: AppSize.vertical(24)),
                           const Divider(),
                           AppointmentInfo(appointment: booking),
+                          PaymentActions(appointment: booking),
                           if (!booking.canCancel)
                             const InlineNotice(
                               message:

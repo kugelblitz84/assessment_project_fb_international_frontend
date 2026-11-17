@@ -27,6 +27,8 @@ import '../features/admin/offers/view/admin_offer_form.dart';
 import '../features/admin/appointments/view/admin_appointments_page.dart';
 import '../features/admin/appointments/view/admin_appointment_details.dart';
 import 'app_routes.dart';
+import '../features/payments/view/payment_page.dart';
+import '../features/admin/payments/view/admin_payments_page.dart';
 
 /// New shell/branch keys discard mounted private state on ownership changes.
 List<RouteBase> createAppPages(
@@ -46,6 +48,17 @@ List<RouteBase> createAppPages(
         child: child,
       ),
       routes: [
+        GoRoute(
+          path: AppRoutes.adminPaymentsPath,
+          builder: (_, _) => const AdminPaymentsPage(),
+          routes: [
+            GoRoute(
+              path: ':id',
+              builder: (_, state) =>
+                  AdminPaymentDetails(id: state.pathParameters['id']!),
+            ),
+          ],
+        ),
         GoRoute(
           path: AppRoutes.adminPath,
           builder: (_, _) => const AdminDashboardPage(),
@@ -196,6 +209,13 @@ List<RouteBase> createAppPages(
                     bookingId: state.pathParameters['bookingId']!,
                   ),
                   routes: [
+                    GoRoute(
+                      path: 'payment',
+                      builder: (_, state) => PaymentPage(
+                        key: ValueKey(identity),
+                        appointmentId: state.pathParameters['bookingId']!,
+                      ),
+                    ),
                     GoRoute(
                       name: AppRoutes.bookingConfirmation,
                       path: 'confirmation',

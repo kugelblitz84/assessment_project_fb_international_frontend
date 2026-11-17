@@ -1,4 +1,5 @@
 abstract final class AppRoutes {
+  static const adminPaymentsPath = '/admin/payments';
   static const adminPath = '/admin';
   static const adminCategoriesPath = '/admin/categories';
   static const adminServicesPath = '/admin/services';

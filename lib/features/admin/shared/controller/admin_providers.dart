@@ -9,6 +9,8 @@ import '../../../shared/controller/appointments_controller.dart';
 import '../../../booking/controller/booking_controller.dart';
 import '../model/admin_models.dart';
 import '../service/admin_repository.dart';
+import '../../../payments/model/payment_models.dart';
+import '../../../payments/service/payment_service.dart';
 
 // Watching both identity and role clears private results on logout, account
 // replacement, and role changes. No admin provider uses the demo adapter.
@@ -45,6 +47,77 @@ final adminOwnerProvider = Provider.autoDispose<AdminOwner>(
 typedef AdminResourceKey = ({AdminOwner owner, String id});
 typedef AppointmentFilter = ({String? status, String? date});
 typedef AdminAppointmentKey = ({AdminOwner owner, AppointmentFilter filter});
+typedef AdminPaymentKey = ({AdminOwner owner, String? status});
+final adminPaymentsProvider = FutureProvider.autoDispose
+    .family<List<AdminPayment>, AdminPaymentKey>(
+      (ref, key) => _load(
+        ref,
+        key.owner,
+        (r) => r.list(
+          ApiEndpoints.adminPayments,
+          AdminPayment.fromJson,
+          query: {if (key.status != null) 'status': key.status},
+        ),
+      ),
+      retry: (_, _) => null,
+    );
+final adminPaymentProvider = FutureProvider.autoDispose
+    .family<AdminPayment, AdminResourceKey>(
+      (ref, key) => _load(
+        ref,
+        key.owner,
+        (r) async => AdminPayment.fromJson(
+          await r.get(
+            ApiEndpoints.resource(ApiEndpoints.adminPayments, key.id),
+          ),
+        ),
+      ),
+      retry: (_, _) => null,
+    );
+final adminPaymentMutationProvider =
+    NotifierProvider.autoDispose<AdminPaymentMutation, bool>(
+      AdminPaymentMutation.new,
+    );
+
+class AdminPaymentMutation extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.watch(sessionIdentityProvider);
+    ref.watch(adminAccessProvider);
+    return false;
+  }
+
+  Future<ApiResponse<void>> reconcile(String id) async {
+    if (state || !ref.read(adminAccessProvider)) {
+      return const ApiResponse.failure('FORBIDDEN');
+    }
+    final owner = ref.read(adminOwnerProvider);
+    state = true;
+    var throttled = false;
+    final result = await ApiErrorHandler.run<void>(() async {
+      final updated = await ref
+          .read(reconciliationGateProvider)
+          .run(
+            id,
+            () => ref.read(adminRepositoryProvider).reconcilePayment(id),
+          );
+      throttled = updated == null;
+    });
+    if (!ref.mounted || owner != ref.read(adminOwnerProvider)) {
+      return const ApiResponse.failure('UNAUTHORIZED');
+    }
+    state = false;
+    ref.invalidate(adminPaymentProvider((owner: owner, id: id)));
+    ref.invalidate(adminPaymentsProvider);
+    ref.invalidate(adminAppointmentProvider);
+    ref.invalidate(adminAppointmentsProvider);
+    ref.invalidate(appointmentsControllerProvider);
+    ref.invalidate(appointmentDetailsProvider);
+    return throttled
+        ? const ApiResponse.failure('PAYMENT_RECONCILE_THROTTLED')
+        : result;
+  }
+}
 
 final adminDashboardProvider = FutureProvider.autoDispose
     .family<Json, AdminOwner>(

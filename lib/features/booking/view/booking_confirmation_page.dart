@@ -14,6 +14,7 @@ import '../../shared/controller/appointments_controller.dart';
 import '../../shared/model/appointment_model.dart';
 import '../../shared/view/appointment_info.dart';
 import '../../shared/view/booking_status_badge.dart';
+import '../../payments/view/payment_actions.dart';
 
 class BookingConfirmationPage extends ConsumerWidget {
   const BookingConfirmationPage({super.key, required this.bookingId});
@@ -98,6 +99,7 @@ class BookingConfirmationPage extends ConsumerWidget {
                       SizedBox(height: AppSize.vertical(24)),
                       const Divider(),
                       AppointmentInfo(appointment: booking),
+                      PaymentActions(appointment: booking),
                       SizedBox(height: AppSize.vertical(24)),
                       FilledButton(
                         onPressed: () => context.goNamed(AppRoutes.myBookings),

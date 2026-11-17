@@ -14,6 +14,12 @@ class AdminRepository {
   final Dio dio;
   Future<Json> get(String path) async =>
       Map<String, dynamic>.from((await dio.get<Object?>(path)).data as Map);
+  Future<Json> reconcilePayment(String id) async => Map<String, dynamic>.from(
+    (await dio.post<Object?>(
+          ApiEndpoints.reconcilePayment(id, admin: true),
+        )).data
+        as Map,
+  );
   Future<List<T>> list<T>(
     String path,
     T Function(Json) decode, {

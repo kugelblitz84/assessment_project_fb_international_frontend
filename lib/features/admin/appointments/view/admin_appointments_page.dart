@@ -110,6 +110,7 @@ class _AdminAppointmentsPageState extends ConsumerState<AdminAppointmentsPage> {
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(item.serviceName),
+                          Text('Payment: ${item.paymentStatus.label}'),
                           Text(
                             '${WorkshopTime.input(item.startsAt)} (Asia/Dhaka)',
                           ),

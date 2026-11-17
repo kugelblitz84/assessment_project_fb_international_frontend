@@ -32,6 +32,7 @@ class BookingCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: AppSize.vertical(16)),
+          Text('Payment: ${booking.paymentStatus.label}'),
           Wrap(
             spacing: 20,
             runSpacing: 10,

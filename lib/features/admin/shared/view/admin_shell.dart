@@ -20,6 +20,7 @@ class _AdminShellState extends ConsumerState<AdminShell> {
   bool loggingOut = false;
   static const destinations = [
     (AppRoutes.adminPath, 'Dashboard', Icons.dashboard_outlined),
+    (AppRoutes.adminPaymentsPath, 'Payments', Icons.payments_outlined),
     (AppRoutes.adminCategoriesPath, 'Categories', Icons.category_outlined),
     (AppRoutes.adminServicesPath, 'Services', Icons.car_repair_outlined),
     (AppRoutes.adminPackagesPath, 'Packages', Icons.inventory_2_outlined),
