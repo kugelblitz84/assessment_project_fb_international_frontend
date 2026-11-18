@@ -29,6 +29,28 @@ class ServiceCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (service.isFeatured) ...[
+                  Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: AppSize.horizontal(10),
+                      vertical: AppSize.vertical(5),
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      borderRadius: BorderRadius.circular(AppSize.radius(6)),
+                    ),
+                    child: Text(
+                      'FEATURED',
+                      style: TextStyle(
+                        color: AppColors.onAccent,
+                        fontSize: AppSize.font(11),
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: AppSize.vertical(10)),
+                ],
                 Text(
                   service.categoryName.toUpperCase(),
                   style: TextStyle(

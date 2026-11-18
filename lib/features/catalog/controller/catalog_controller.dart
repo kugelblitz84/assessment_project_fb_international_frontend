@@ -57,3 +57,9 @@ final catalogByIdProvider = Provider<Map<String, ServiceModel>>(
       service.id: service,
   }),
 );
+
+final featuredServicesProvider = Provider<List<ServiceModel>>(
+  (ref) => List.unmodifiable(
+    ref.watch(catalogServicesProvider).where((service) => service.isFeatured),
+  ),
+);

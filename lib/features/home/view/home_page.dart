@@ -10,6 +10,7 @@ import 'package:assessment_project_fb_international_frontend/features/catalog/co
 import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/category_filter_section.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/explore_hero.dart';
+import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/featured_services_section.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/home_header.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/service_catalog_section.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/widgets/service_filter_sheet.dart';
@@ -118,6 +119,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               ],
             ),
           ),
+          const FeaturedServicesSection(),
           const ServiceCatalogSection(),
           SliverToBoxAdapter(
             child: Padding(

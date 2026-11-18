@@ -14,6 +14,7 @@ class ServiceModel {
     this.available = true,
     this.type = 'INDIVIDUAL',
     this.originalPrice,
+    this.isFeatured = false,
   });
   final String id;
   final String name;
@@ -28,6 +29,7 @@ class ServiceModel {
   final bool available;
   final String type;
   final num? originalPrice;
+  final bool isFeatured;
   bool get isPackage => type == 'PACKAGE';
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class ServiceModel {
         json['durationMinutes'] is! int ||
         (json['durationMinutes'] as int) < 1 ||
         json['available'] is! bool ||
+        (json.containsKey('isFeatured') && json['isFeatured'] is! bool) ||
         json['inclusions'] is! List ||
         (json['inclusions'] as List).any((entry) => entry is! String)) {
       throw const FormatException('Invalid service response.');
@@ -65,6 +68,7 @@ class ServiceModel {
       available: json['available'] as bool,
       type: _serviceType(json['type']),
       originalPrice: json['originalPrice'] as num?,
+      isFeatured: json['isFeatured'] as bool? ?? false,
     );
   }
   static String _serviceType(Object? value) {
