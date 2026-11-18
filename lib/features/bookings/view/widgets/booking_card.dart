@@ -28,7 +28,10 @@ class BookingCard extends StatelessWidget {
                 booking.serviceName,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
-              BookingStatusBadge(status: booking.status),
+              BookingStatusBadge(
+                status: booking.status,
+                isUpcoming: booking.upcoming,
+              ),
             ],
           ),
           SizedBox(height: AppSize.vertical(16)),

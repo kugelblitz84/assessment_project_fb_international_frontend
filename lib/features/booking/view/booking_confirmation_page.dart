@@ -90,7 +90,12 @@ class BookingConfirmationPage extends ConsumerWidget {
                         style: const TextStyle(color: AppColors.secondary),
                       ),
                       SizedBox(height: AppSize.vertical(20)),
-                      Center(child: BookingStatusBadge(status: booking.status)),
+                      Center(
+                        child: BookingStatusBadge(
+                          status: booking.status,
+                          isUpcoming: booking.upcoming,
+                        ),
+                      ),
                       SizedBox(height: AppSize.vertical(24)),
                       const Divider(),
                       AppointmentInfo(appointment: booking),
