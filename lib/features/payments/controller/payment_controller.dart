@@ -2,14 +2,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_failure.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/controller/reconciliation_gate.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_summary.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/service/payment_service.dart';
 
 typedef PaymentKey = ({SessionIdentity identity, String appointmentId});
@@ -23,6 +24,51 @@ final paymentControllerProvider = AsyncNotifierProvider.autoDispose
 class PaymentController extends AsyncNotifier<PaymentState> {
   PaymentController(this.key);
   final PaymentKey key;
+  bool canInitiate(PaymentConfig config) {
+    final current = state.asData?.value;
+    return owned &&
+        current != null &&
+        config.onlinePaymentEnabled &&
+        current.appointment.canPayOnline &&
+        !current.hasUnresolved &&
+        !current.uncertain;
+  }
+
+  bool canResume(PaymentAttempt attempt, PaymentConfig config) =>
+      owned &&
+      attempt.status == PaymentStatus.pending &&
+      attempt.checkoutUrl != null &&
+      config.onlinePaymentEnabled &&
+      state.asData?.value.appointment.paymentStatus == PaymentSummary.pending;
+
+  Uri? prepareCheckout(PaymentAttempt attempt, PaymentConfig config) {
+    if (!owned ||
+        attempt.status != PaymentStatus.pending ||
+        attempt.checkoutUrl == null) {
+      return null;
+    }
+    try {
+      return trustedCheckoutUri(attempt.checkoutUrl!, config);
+    } catch (_) {
+      checkoutLaunchCompleted(false);
+      return null;
+    }
+  }
+
+  void checkoutLaunchCompleted(bool launched) {
+    if (!owned) return;
+    final current = state.asData?.value;
+    if (current == null) return;
+    state = AsyncData(
+      current.copyWith(
+        clearCheckoutError: launched,
+        checkoutError: launched
+            ? null
+            : 'Checkout could not be opened safely. You can resume checkout or refresh its status.',
+      ),
+    );
+  }
+
   bool get owned =>
       ref.mounted &&
       key.identity == ref.read(sessionIdentityProvider) &&

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
@@ -54,9 +53,8 @@ class BookingDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = appointmentDetailsProvider(bookingId);
-    final details = ref.watch(provider);
+    final details = ref.watch(ownedAppointmentDetailsProvider(bookingId));
     void refresh() => ref.invalidate(provider);
-    final user = ref.watch(currentUserProvider);
     return AppPageScaffold(
       title: 'Booking details',
       body: SingleChildScrollView(
@@ -66,9 +64,6 @@ class BookingDetailsPage extends ConsumerWidget {
             loading: () => const LoadingState(label: 'Loading appointment…'),
             error: (_, _) => ErrorState(onRetry: refresh),
             data: (data) {
-              if (user == null || data.ownerId != user.id) {
-                return const LoadingState();
-              }
               final booking = data.appointment;
               if (booking == null) {
                 return ErrorState(code: data.errorCode, onRetry: refresh);

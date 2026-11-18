@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';

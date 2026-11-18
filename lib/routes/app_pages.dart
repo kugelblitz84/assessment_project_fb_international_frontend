@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/main_navigation_shell.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/navigation_shell_scope.dart';
 import 'package:assessment_project_fb_international_frontend/app/widgets/not_found_page.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/view/admin_appointment_details.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/view/admin_appointments_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/categories/view/admin_categories_page.dart';

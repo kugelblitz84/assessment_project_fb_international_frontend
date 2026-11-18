@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
+import 'package:assessment_project_fb_international_frontend/core/network/api_failure.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 
 void main() {
@@ -82,6 +83,8 @@ void main() {
         expect(result.success, isFalse);
         expect(result.data, isNull);
         expect(result.errorCode, code);
+        expect(result.statusCode, status);
+        expect(result.isUnauthorized, status == 401);
         final message = AppErrorMessages.messageFor(result.errorCode);
         expect(message, isNotEmpty);
         expect(message, isNot(contains('private')));
@@ -102,6 +105,26 @@ void main() {
 
         expect(result.success, isFalse);
         expect(result.errorCode, 'CONFLICT');
+      }
+    });
+
+    test('manual and wrapped normalization preserve typed failures', () async {
+      for (final code in ['FORBIDDEN', 'UNAUTHORIZED', 'SESSION_EXPIRED']) {
+        for (final error in <Object>[
+          ApiFailure(code),
+          DioException(
+            requestOptions: RequestOptions(path: '/resource'),
+            error: ApiFailure(code),
+          ),
+        ]) {
+          final result = await ApiErrorHandler.run<void>(
+            () async => throw error,
+          );
+          expect(result.errorCode, ApiErrorHandler.codeFor(error));
+          expect(result.errorCode, code);
+          expect(result.statusCode, isNull);
+          expect(result.isUnauthorized, code != 'FORBIDDEN');
+        }
       }
     });
 

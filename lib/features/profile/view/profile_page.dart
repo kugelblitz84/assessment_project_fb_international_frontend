@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/logout_controller.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/controller/logout_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';

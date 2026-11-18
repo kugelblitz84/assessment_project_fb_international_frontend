@@ -1,13 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/model/create_booking_payload.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_date_selection.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/service/booking_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/workshop/controller/platform_config_provider.dart';
 
@@ -21,6 +22,8 @@ class BookingController extends AsyncNotifier<BookingState> {
   BookingController(this.serviceId);
   final String serviceId;
   int _request = 0;
+  ({BookingDateSelection selection, SessionIdentity identity, int request})?
+  _dateSelection;
   bool get configurationFresh =>
       ref.read(platformConfigProvider).asData?.value.fresh == true;
   DateTime get firstBookableDate => ref.read(bookingServiceProvider).today;
@@ -30,6 +33,7 @@ class BookingController extends AsyncNotifier<BookingState> {
   @override
   Future<BookingState> build() async {
     _request++;
+    _dateSelection = null;
     ref.watch(sessionIdentityProvider);
     final session = ref.read(sessionProvider).asData?.value;
     final service = ref.watch(bookingServiceProvider);
@@ -54,10 +58,58 @@ class BookingController extends AsyncNotifier<BookingState> {
     );
   }
 
-  Future<void> selectDate(DateTime date) => _loadAvailability(
-    date,
-    preserveSelection: state.asData?.value.date == date,
-  );
+  BookingDateSelection? prepareDateSelection() {
+    if (!ref.mounted) return null;
+    final current = state.asData?.value;
+    if (current == null ||
+        current.submitting ||
+        current.uncertain ||
+        current.created != null) {
+      return null;
+    }
+    if (!configurationFresh) {
+      ref.invalidate(platformConfigProvider);
+      return null;
+    }
+    final first = firstBookableDate;
+    final last = lastBookableDate;
+    final selection = BookingDateSelection(
+      firstDate: first,
+      lastDate: last,
+      initialDate: current.date.isBefore(first)
+          ? first
+          : current.date.isAfter(last)
+          ? last
+          : current.date,
+    );
+    _dateSelection = (
+      selection: selection,
+      identity: ref.read(sessionIdentityProvider),
+      request: _request,
+    );
+    return selection;
+  }
+
+  Future<void> selectDate(
+    DateTime date, {
+    BookingDateSelection? selection,
+  }) async {
+    if (!ref.mounted) return;
+    if (selection != null) {
+      final pending = _dateSelection;
+      if (pending == null ||
+          !identical(selection, pending.selection) ||
+          pending.identity != ref.read(sessionIdentityProvider) ||
+          pending.request != _request) {
+        return;
+      }
+      _dateSelection = null;
+    }
+    await _loadAvailability(
+      date,
+      preserveSelection: state.asData?.value.date == date,
+    );
+  }
 
   Future<void> _loadAvailability(
     DateTime date, {

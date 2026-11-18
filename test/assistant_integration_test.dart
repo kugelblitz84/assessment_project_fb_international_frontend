@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/interceptors/auth_interceptor.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/request_access.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/token_refresh_coordinator.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_message_model.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_recommendation.dart';
 import 'package:assessment_project_fb_international_frontend/features/assistant/model/assistant_request_payload.dart';

@@ -5,7 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_resume_listener.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
@@ -13,7 +13,6 @@ import 'package:assessment_project_fb_international_frontend/core/widgets/page_c
 import 'package:assessment_project_fb_international_frontend/features/payments/controller/payment_config_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/controller/payment_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
-import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_summary.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key, required this.appointmentId});
@@ -28,7 +27,6 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     for (final name in ['phone', 'address', 'city', 'postcode'])
       name: TextEditingController(),
   };
-  String? launchError;
   @override
   void dispose() {
     for (final controller in contact.values) {
@@ -37,29 +35,22 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
     super.dispose();
   }
 
-  Future<void> open(PaymentAttempt attempt, PaymentConfig config) async {
+  Future<void> open(
+    PaymentController controller,
+    PaymentAttempt attempt,
+    PaymentConfig config,
+  ) async {
+    final uri = controller.prepareCheckout(attempt, config);
+    if (uri == null) return;
+    var launched = false;
     try {
-      if (attempt.status != PaymentStatus.pending ||
-          attempt.checkoutUrl == null) {
-        return;
-      }
-      final uri = trustedCheckoutUri(attempt.checkoutUrl!, config);
-      if (!await launchUrl(
+      launched = await launchUrl(
         uri,
         mode: LaunchMode.externalApplication,
         webOnlyWindowName: '_blank',
-      )) {
-        throw const FormatException('Unable to launch.');
-      }
-      if (mounted) setState(() => launchError = null);
-    } catch (_) {
-      if (mounted) {
-        setState(
-          () => launchError =
-              'Checkout could not be opened safely. You can resume checkout or refresh its status.',
-        );
-      }
-    }
+      );
+    } catch (_) {}
+    controller.checkoutLaunchCompleted(launched);
   }
 
   @override
@@ -115,8 +106,8 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                           message: AppErrorMessages.messageFor(data.errorCode),
                           error: true,
                         ),
-                      if (launchError != null)
-                        InlineNotice(message: launchError!, error: true),
+                      if (data.checkoutError != null)
+                        InlineNotice(message: data.checkoutError!, error: true),
                       config.when(
                         loading: () => const LoadingState(
                           label: 'Checking payment options…',
@@ -150,10 +141,7 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                               const Text(
                                 'Online payment is currently unavailable. Your booking remains valid.',
                               ),
-                            if (capabilities.onlinePaymentEnabled &&
-                                data.appointment.canPayOnline &&
-                                !data.hasUnresolved &&
-                                !data.uncertain)
+                            if (controller.canInitiate(capabilities))
                               Form(
                                 key: form,
                                 child: Column(
@@ -215,15 +203,12 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                                                               .text,
                                                     ),
                                                   );
-                                              if (!mounted ||
-                                                  identity !=
-                                                      ref.read(
-                                                        sessionIdentityProvider,
-                                                      )) {
+                                              if (!mounted) {
                                                 return;
                                               }
                                               if (attempt != null) {
                                                 await open(
+                                                  controller,
                                                   attempt,
                                                   capabilities,
                                                 );
@@ -281,17 +266,18 @@ class _PaymentPageState extends ConsumerState<PaymentPage> {
                                         const Text(
                                           'Payment processing. Return here after checkout and refresh payment status.',
                                         ),
-                                      if (attempt.status ==
-                                              PaymentStatus.pending &&
-                                          attempt.checkoutUrl != null &&
-                                          capabilities.onlinePaymentEnabled &&
-                                          data.appointment.paymentStatus ==
-                                              PaymentSummary.pending)
+                                      if (controller.canResume(
+                                        attempt,
+                                        capabilities,
+                                      ))
                                         OutlinedButton(
                                           onPressed: data.busy
                                               ? null
-                                              : () =>
-                                                    open(attempt, capabilities),
+                                              : () => open(
+                                                  controller,
+                                                  attempt,
+                                                  capabilities,
+                                                ),
                                           child: const Text('Resume Checkout'),
                                         ),
                                     ],

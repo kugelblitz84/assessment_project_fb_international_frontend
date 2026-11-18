@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/main_navigation_shell.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_services.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_workshop.dart';
@@ -13,6 +13,7 @@ import 'package:assessment_project_fb_international_frontend/features/assistant/
 import 'package:assessment_project_fb_international_frontend/features/booking/controller/booking_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/controller/my_bookings_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/model/my_bookings_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/view/my_bookings_page.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/controller/home_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/home/view/home_page.dart';

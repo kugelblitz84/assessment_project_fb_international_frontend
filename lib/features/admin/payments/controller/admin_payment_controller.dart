@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/admin_appointment_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/payments/service/admin_payment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';

@@ -4,30 +4,26 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/payments/controller/admin_payment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/payments/controller/payment_filter_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
 import 'package:assessment_project_fb_international_frontend/features/payments/model/payment_models.dart';
 
-class AdminPaymentsPage extends ConsumerStatefulWidget {
+class AdminPaymentsPage extends ConsumerWidget {
   const AdminPaymentsPage({super.key});
   @override
-  ConsumerState<AdminPaymentsPage> createState() => _AdminPaymentsPageState();
-}
-
-class _AdminPaymentsPageState extends ConsumerState<AdminPaymentsPage> {
-  String status = '';
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(paymentFilterProvider);
     final provider = adminPaymentsProvider((
       owner: ref.watch(adminOwnerProvider),
-      status: status.isEmpty ? null : status,
+      status: filter.query,
     ));
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(24),
           child: DropdownButtonFormField<String>(
-            initialValue: status,
+            initialValue: filter.status,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Payment status'),
             items: [
@@ -35,7 +31,7 @@ class _AdminPaymentsPageState extends ConsumerState<AdminPaymentsPage> {
               for (final s in PaymentStatus.values)
                 DropdownMenuItem(value: s.apiValue, child: Text(s.label)),
             ],
-            onChanged: (value) => setState(() => status = value ?? ''),
+            onChanged: ref.read(paymentFilterProvider.notifier).select,
           ),
         ),
         TextButton.icon(

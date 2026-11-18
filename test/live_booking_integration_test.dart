@@ -8,7 +8,7 @@ import 'package:assessment_project_fb_international_frontend/app/api_error_messa
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/request_access.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/model/selected_image.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/service/admin_image_service.dart';

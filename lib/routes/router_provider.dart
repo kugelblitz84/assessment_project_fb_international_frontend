@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/widgets/not_found_page.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_pages.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';

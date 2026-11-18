@@ -5,8 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/offers/controller/admin_offer_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/admin_offer.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/offer_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/offers/model/offer_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/offers/controller/offer_form_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/model/admin_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
@@ -75,10 +74,11 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
   late final end = TextEditingController(
     text: widget.item == null ? '' : WorkshopTime.input(widget.item!.endsAt),
   );
-  late String service = widget.item?.serviceId ?? widget.services.first.id;
-  late String type = widget.item?.discountType ?? 'PERCENTAGE';
-  late bool active = widget.item?.isActive ?? true;
-  String? error;
+  late final editorProvider = offerFormProvider((
+    owner: Object(),
+    item: widget.item,
+    firstServiceId: widget.services.first.id,
+  ));
   @override
   void dispose() {
     for (final c in [title, description, value, start, end]) {
@@ -89,32 +89,16 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
 
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
-    final startsAt = WorkshopTime.parse(start.text),
-        endsAt = WorkshopTime.parse(end.text);
-    final validation = OfferValidation.offer(
-      type,
-      value.text,
-      startsAt,
-      endsAt,
-    );
-    setState(() => error = validation);
-    if (validation != null) return;
     final result = await ref
-        .read(adminOfferMutationProvider.notifier)
+        .read(editorProvider.notifier)
         .save(
-          OfferPayload(
-            serviceId: service,
-            title: title.text,
-            description: description.text,
-            discountType: type,
-            discountValue: value.text,
-            startsAt: startsAt!,
-            endsAt: endsAt!,
-            isActive: active,
-          ),
-          id: widget.item?.id,
+          title: title.text,
+          description: description.text,
+          value: value.text,
+          start: start.text,
+          end: end.text,
         );
-    if (!mounted) return;
+    if (!mounted || result == null) return;
     adminNotice(context, result, success: 'Offer saved.');
     if (result.success) {
       context.go(AppRoutes.adminOffersPath);
@@ -123,7 +107,11 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminOfferMutationProvider);
+    final draft = ref.watch(editorProvider);
+    final editor = ref.read(editorProvider.notifier);
+    final busy = ref.watch(
+      adminOfferMutationProvider.select((state) => state.busy),
+    );
     return Form(
       key: form,
       child: AdminPageBody(
@@ -134,7 +122,7 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           DropdownButtonFormField<String>(
-            initialValue: service,
+            initialValue: draft.serviceId,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Service or package'),
             items: [
@@ -147,7 +135,7 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
                   ),
                 ),
             ],
-            onChanged: busy ? null : (v) => setState(() => service = v!),
+            onChanged: busy ? null : editor.selectService,
           ),
           TextFormField(
             controller: title,
@@ -163,7 +151,7 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
             validator: AdminValidation.description,
           ),
           DropdownButtonFormField<String>(
-            initialValue: type,
+            initialValue: draft.type,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Discount type'),
             items: const [
@@ -173,7 +161,7 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
                 child: Text('Fixed amount (BDT)'),
               ),
             ],
-            onChanged: busy ? null : (v) => setState(() => type = v!),
+            onChanged: busy ? null : editor.selectType,
           ),
           TextFormField(
             controller: value,
@@ -210,10 +198,11 @@ class _OfferFormState extends ConsumerState<_OfferForm> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Active'),
-            value: active,
-            onChanged: busy ? null : (v) => setState(() => active = v),
+            value: draft.active,
+            onChanged: busy ? null : editor.setActive,
           ),
-          if (error != null) InlineNotice(message: error!, error: true),
+          if (draft.error != null)
+            InlineNotice(message: draft.error!, error: true),
           Wrap(
             spacing: 12,
             children: [

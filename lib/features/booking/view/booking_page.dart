@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
@@ -30,43 +29,23 @@ class BookingPage extends ConsumerWidget {
   const BookingPage({super.key, required this.serviceId});
   final String serviceId;
 
-  Future<void> _pickDate(
-    BuildContext context,
-    WidgetRef ref,
-    BookingState draft,
-  ) async {
-    final provider = bookingControllerProvider(serviceId);
-    final controller = ref.read(provider.notifier);
-    if (!controller.configurationFresh) {
-      await controller.refreshAvailability();
+  Future<void> _pickDate(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(bookingControllerProvider(serviceId).notifier);
+    final selection = controller.prepareDateSelection();
+    if (selection == null) return;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: selection.initialDate,
+      firstDate: selection.firstDate,
+      lastDate: selection.lastDate,
+      helpText: 'Choose appointment date',
+    );
+    if (date == null ||
+        !context.mounted ||
+        ModalRoute.of(context)?.isCurrent != true) {
       return;
     }
-    final identity = ref.read(sessionIdentityProvider);
-    final today = controller.firstBookableDate;
-    var validDraft = true;
-    // Riverpod may reuse a notifier instance when its provider is invalidated.
-    final subscription = ref.listenManual(provider, (_, next) {
-      if (next.isLoading) validDraft = false;
-    });
-    try {
-      final date = await showDatePicker(
-        context: context,
-        initialDate: draft.date.isBefore(today) ? today : draft.date,
-        firstDate: today,
-        lastDate: controller.lastBookableDate,
-        helpText: 'Choose appointment date',
-      );
-      if (date == null || !context.mounted || !validDraft) return;
-      if (identity != ref.read(sessionIdentityProvider) ||
-          ModalRoute.of(context)?.isCurrent != true) {
-        return;
-      }
-      final currentController = ref.read(provider.notifier);
-      if (!identical(currentController, controller)) return;
-      currentController.selectDate(date);
-    } finally {
-      subscription.close();
-    }
+    await controller.selectDate(date, selection: selection);
   }
 
   @override
@@ -175,8 +154,7 @@ class BookingPage extends ConsumerWidget {
                           main: draft.step == BookingStep.schedule
                               ? BookingDateSelector(
                                   draft: draft,
-                                  onPickDate: () =>
-                                      _pickDate(context, ref, draft),
+                                  onPickDate: () => _pickDate(context, ref),
                                   onRefresh: controller.refreshAvailability,
                                   onSlotSelected: controller.selectSlot,
                                 )

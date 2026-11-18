@@ -9,7 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:assessment_project_fb_international_frontend/core/config/api_config.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/auth_repository_impl.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/secure_token_storage.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';

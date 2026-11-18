@@ -6,6 +6,7 @@ import 'package:assessment_project_fb_international_frontend/features/admin/serv
 import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_payload.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/service/admin_catalog_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_mutation_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/catalog/controller/service_details_controller.dart';
 
@@ -14,21 +15,42 @@ final adminServicesProvider = FutureProvider.autoDispose
       final service = ref.watch(adminCatalogServiceProvider);
       return loadAdmin(ref, owner, service.list);
     }, retry: (_, _) => null);
+final adminIndividualServicesProvider =
+    Provider.autoDispose<AsyncValue<List<AdminService>>>(
+      (ref) => ref
+          .watch(adminServicesProvider(ref.watch(adminOwnerProvider)))
+          .whenData(
+            (items) => items
+                .where((item) => !item.service.isPackage)
+                .toList(growable: false),
+          ),
+    );
+final adminServiceNamesProvider = Provider.autoDispose<Map<String, String>>(
+  (ref) => {
+    for (final item
+        in ref
+                .watch(adminServicesProvider(ref.watch(adminOwnerProvider)))
+                .asData
+                ?.value ??
+            <AdminService>[])
+      item.id: item.service.name,
+  },
+);
 final adminServiceProvider = FutureProvider.autoDispose
     .family<AdminService, AdminResourceKey>((ref, key) {
       final service = ref.watch(adminCatalogServiceProvider);
       return loadAdmin(ref, key.owner, () => service.get(key.id));
     }, retry: (_, _) => null);
 final adminServiceMutationProvider =
-    NotifierProvider.autoDispose<AdminServiceMutation, bool>(
+    NotifierProvider.autoDispose<AdminServiceMutation, AdminMutationState>(
       AdminServiceMutation.new,
     );
 
-class AdminServiceMutation extends Notifier<bool> {
+class AdminServiceMutation extends Notifier<AdminMutationState> {
   @override
-  bool build() {
+  AdminMutationState build() {
     ref.watch(adminOwnerProvider);
-    return false;
+    return const AdminMutationState();
   }
 
   Future<ApiResponse<void>> save(ServicePayload payload, {String? id}) async {
@@ -56,15 +78,15 @@ class AdminServiceMutation extends Notifier<bool> {
       _run(() => ref.read(adminCatalogServiceProvider).setActive(id, active));
   Future<ApiResponse<void>> _run(Future<void> Function() action) async {
     final owner = ref.read(adminOwnerProvider);
-    if (state || !owner.authorized) {
+    if (state.busy || !owner.authorized) {
       return const ApiResponse.failure('FORBIDDEN');
     }
-    state = true;
+    state = const AdminMutationState(busy: true);
     final result = await ApiErrorHandler.run(action);
     if (!ref.mounted || owner != ref.read(adminOwnerProvider)) {
       return const ApiResponse.failure('SESSION_EXPIRED');
     }
-    state = false;
+    state = AdminMutationState(errorCode: result.errorCode);
     if (result.success) {
       ref.invalidate(adminDashboardProvider);
       ref.invalidate(catalogControllerProvider);

@@ -10,7 +10,7 @@ import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_endpoints.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
@@ -257,12 +257,15 @@ void main() {
       final controller = container.read(adminCategoryMutationProvider.notifier);
       final first = controller.save(const CategoryPayload(name: 'New'));
       await adapter.mutationStarted.future;
+      expect(container.read(adminCategoryMutationProvider).busy, isTrue);
       final second = await controller.save(
         const CategoryPayload(name: 'Duplicate'),
       );
       expect(second.success, isFalse);
       adapter.mutationGate!.complete();
       expect((await first).success, isTrue);
+      expect(container.read(adminCategoryMutationProvider).busy, isFalse);
+      expect(container.read(adminCategoryMutationProvider).errorCode, isNull);
       await container.read(
         adminCategoriesProvider(container.read(adminOwnerProvider)).future,
       );

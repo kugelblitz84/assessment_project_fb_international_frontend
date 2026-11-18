@@ -43,6 +43,22 @@ List<String> architectureViolations(Directory source) {
           : null;
       if (target != null) dependencies[relative]!.add(target);
       final rule = switch (relative) {
+        _ when uri.startsWith('package:get/') =>
+          'GetX is not allowed; use Riverpod and GoRouter',
+        _
+            when relative.startsWith('core/session/domain/') &&
+                !uri.startsWith('dart:') &&
+                !(target?.startsWith('core/session/domain/') ?? false) =>
+          'session domain imports infrastructure/presentation',
+        _
+            when relative.startsWith('core/session/data/') &&
+                (target?.startsWith('core/session/presentation/') ?? false) =>
+          'session data imports presentation',
+        _
+            when (relative.contains('/controller/') ||
+                    relative.startsWith('core/session/')) &&
+                uri.startsWith('package:go_router/') =>
+          'navigation belongs to Routes and views',
         _
             when relative.startsWith('core/network/') &&
                 (uri == 'package:flutter/material.dart' ||
@@ -66,6 +82,11 @@ List<String> architectureViolations(Directory source) {
                 (target?.contains('/view/') ?? false) =>
           'controller imports presentation',
         _
+            when relative.contains('/controller/') &&
+                (uri == 'package:flutter/material.dart' ||
+                    uri == 'package:flutter/widgets.dart') =>
+          'controller imports widget APIs; dialogs/navigation belong in views',
+        _
             when relative.contains('/service/') &&
                 (target?.contains('/controller/') ?? false) =>
           'service imports controller',
@@ -81,6 +102,12 @@ List<String> architectureViolations(Directory source) {
     }
     if (relative.contains('/view/') && text.contains('ApiEndpoints')) {
       violations.add('$relative: view references API endpoints');
+    }
+    if (relative.contains('/view/') &&
+        (text.contains('DateTime.now()') || text.contains('Timer.periodic'))) {
+      violations.add(
+        '$relative: time-based business state belongs in controllers',
+      );
     }
   }
   final visited = <String>{};

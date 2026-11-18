@@ -11,8 +11,8 @@ import 'package:assessment_project_fb_international_frontend/app.dart';
 import 'package:assessment_project_fb_international_frontend/app/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/payments/controller/admin_payment_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
@@ -308,6 +308,37 @@ void main() {
         ),
         throwsFormatException,
       );
+    },
+  );
+  test(
+    'checkout policy and launch errors belong to the payment controller',
+    () async {
+      final container = demoContainer(demoData: false);
+      await container.read(sessionProvider.future);
+      final adapter = PaymentAdapter()..attempts = [attemptJson()];
+      container.read(dioProvider).httpClientAdapter = adapter;
+      final provider = paymentControllerProvider((
+        identity: container.read(sessionIdentityProvider),
+        appointmentId: appointmentId,
+      ));
+      container.listen(provider, (_, _) {});
+      await container.read(provider.future);
+      final controller = container.read(provider.notifier);
+      final unsafe = PaymentAttempt.fromJson({
+        ...attemptJson(),
+        'checkoutUrl': 'https://attacker.test/checkout',
+      });
+      expect(controller.prepareCheckout(unsafe, enabled), isNull);
+      expect(container.read(provider).requireValue.checkoutError, isNotNull);
+      final attempt = PaymentAttempt.fromJson(attemptJson());
+      expect(controller.prepareCheckout(attempt, enabled)?.scheme, 'https');
+      controller.checkoutLaunchCompleted(true);
+      expect(container.read(provider).requireValue.checkoutError, isNull);
+      await container.read(sessionProvider.notifier).logout();
+      await container.pump();
+      final afterLogout = container.read(provider);
+      controller.checkoutLaunchCompleted(false);
+      expect(container.read(provider), same(afterLogout));
     },
   );
   test(

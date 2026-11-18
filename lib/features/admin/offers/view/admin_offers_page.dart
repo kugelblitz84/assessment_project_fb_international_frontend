@@ -16,12 +16,7 @@ class AdminOffersPage extends ConsumerWidget {
     value: ref.watch(adminOffersProvider(ref.watch(adminOwnerProvider))),
     onRetry: () => ref.invalidate(adminOffersProvider),
     builder: (items) {
-      final services =
-          ref
-              .watch(adminServicesProvider(ref.watch(adminOwnerProvider)))
-              .asData
-              ?.value ??
-          [];
+      final serviceNames = ref.watch(adminServiceNamesProvider);
       return AdminPageBody(
         children: [
           Wrap(
@@ -51,16 +46,9 @@ class AdminOffersPage extends ConsumerWidget {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    Text(serviceNames[item.serviceId] ?? item.serviceId),
                     Text(
-                      services
-                              .where((s) => s.id == item.serviceId)
-                              .firstOrNull
-                              ?.service
-                              .name ??
-                          item.serviceId,
-                    ),
-                    Text(
-                      '${item.discountValue}${item.discountType == 'PERCENTAGE' ? '%' : ' BDT'} · ${item.stateAt(DateTime.now())}',
+                      '${item.discountValue}${item.discountType == 'PERCENTAGE' ? '%' : ' BDT'} · ${ref.watch(adminOfferStatusProvider(item))}',
                     ),
                     Text(
                       '${WorkshopTime.input(item.startsAt)} – ${WorkshopTime.input(item.endsAt)} (Asia/Dhaka)',
@@ -78,7 +66,12 @@ class AdminOffersPage extends ConsumerWidget {
                           child: const Text('Edit'),
                         ),
                         TextButton(
-                          onPressed: ref.watch(adminOfferMutationProvider)
+                          onPressed:
+                              ref.watch(
+                                adminOfferMutationProvider.select(
+                                  (state) => state.busy,
+                                ),
+                              )
                               ? null
                               : () async {
                                   if (!await adminConfirm(

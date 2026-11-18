@@ -4,7 +4,7 @@ import 'package:assessment_project_fb_international_frontend/core/network/dio_pr
 import 'package:assessment_project_fb_international_frontend/core/session/data/auth_repository_impl.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_repository.dart';
 
-export 'package:assessment_project_fb_international_frontend/core/session/application/token_storage_provider.dart';
+export 'package:assessment_project_fb_international_frontend/core/session/data/token_storage_provider.dart';
 
 final authRepositoryProvider = Provider<AuthRepository>(
   (ref) => AuthRepositoryImpl(

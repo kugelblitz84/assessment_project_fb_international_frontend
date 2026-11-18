@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/widgets/bootstrap_view.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/bootstrap/view/bootstrap_gate.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_theme.dart';
 import 'package:assessment_project_fb_international_frontend/routes/router_provider.dart';
 
@@ -23,16 +23,9 @@ class App extends ConsumerWidget {
         theme: AppTheme.light,
         themeMode: ThemeMode.light,
         routerConfig: router,
-        builder: (context, child) => Consumer(
-          builder: (context, ref, _) {
-            // Omit the Router subtree entirely until restoration resolves, so
-            // protected pages cannot mount or start requests during startup/retry.
-            return ref.watch(
-                  sessionProvider.select((session) => session.isLoading),
-                )
-                ? const BootstrapView()
-                : child ?? const SizedBox.shrink();
-          },
+        builder: (context, child) => BootstrapGate(
+          loading: const BootstrapView(),
+          child: child ?? const SizedBox.shrink(),
         ),
       ),
     );

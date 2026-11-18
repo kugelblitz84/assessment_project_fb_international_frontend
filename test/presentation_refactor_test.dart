@@ -4,7 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:assessment_project_fb_international_frontend/app.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_theme.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_resume_listener.dart';

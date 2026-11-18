@@ -9,6 +9,7 @@ import 'package:assessment_project_fb_international_frontend/core/widgets/async_
 import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/controller/appointments_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/controller/my_bookings_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/bookings/model/my_bookings_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/bookings/view/widgets/booking_card.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
@@ -16,7 +17,7 @@ class MyBookingsPage extends ConsumerWidget {
   const MyBookingsPage({super.key});
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bookings = ref.watch(appointmentsControllerProvider);
+    final bookings = ref.watch(ownedAppointmentsProvider);
     final tab = ref.watch(myBookingsTabProvider);
     final items = ref.watch(visibleAppointmentsProvider);
     final controller = ref.watch(appointmentsControllerProvider.notifier);
@@ -73,7 +74,6 @@ class MyBookingsPage extends ConsumerWidget {
               ),
             ),
             data: (data) {
-              if (data.ownerId == null) return box(const LoadingState());
               if (data.errorCode != null && data.items.isEmpty) {
                 return box(ErrorState(code: data.errorCode, onRetry: refresh));
               }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/shell/page_scaffold.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
@@ -21,8 +20,7 @@ class BookingConfirmationPage extends ConsumerWidget {
   final String bookingId;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final details = ref.watch(appointmentDetailsProvider(bookingId));
-    final user = ref.watch(currentUserProvider);
+    final details = ref.watch(ownedAppointmentDetailsProvider(bookingId));
     return AppPageScaffold(
       title: 'Booking acknowledgement',
       body: SingleChildScrollView(
@@ -35,9 +33,6 @@ class BookingConfirmationPage extends ConsumerWidget {
                   ref.invalidate(appointmentDetailsProvider(bookingId)),
             ),
             data: (data) {
-              if (user == null || data.ownerId != user.id) {
-                return const LoadingState();
-              }
               final booking = data.appointment;
               if (booking == null) {
                 return ErrorState(

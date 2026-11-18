@@ -40,9 +40,9 @@ Do not deploy demo options for assessment.
 
 Catalog, appointment and workshop code live in their named feature domains. App
 shells and branding live under `lib/app`; Core has no feature or app dependencies.
-Admin resources have typed models, services and controllers. See the current
-[architecture cleanup report](docs/architecture_cleanup_report.md) for the tree,
-ownership decisions, baseline, verification results and remaining live checks.
+Admin resources have typed models, services and controllers. See the
+[state ownership guide](docs/feature_state_ownership.md) for session boundaries,
+feature state models, controller responsibilities, and UI effects.
 
 The existing trusted-backend transport, secure token storage, persistent native
 cookies, credentialed browser cookies, CSRF and coordinated refresh remain.

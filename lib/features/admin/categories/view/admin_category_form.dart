@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/admin_category_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/admin_category.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/categories/model/category_payload.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/categories/controller/category_form_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/controller/admin_image_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/view/admin_image_field.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
@@ -53,7 +54,10 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
   late final order = TextEditingController(
     text: '${widget.item?.sortOrder ?? 0}',
   );
-  late bool active = widget.item?.isActive ?? true;
+  late final editorProvider = categoryFormProvider((
+    image: imageKey,
+    item: widget.item,
+  ));
   @override
   void dispose() {
     name.dispose();
@@ -65,8 +69,8 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
 
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
-    if (widget.item != null &&
-        active != widget.item!.isActive &&
+    final editor = ref.read(editorProvider.notifier);
+    if (editor.requiresStatusConfirmation &&
         !await adminConfirm(
           context,
           'Change category status?',
@@ -75,22 +79,13 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
       return;
     }
     if (!mounted) return;
-    final image = ref.read(adminImageProvider(imageKey));
-    if (image.busy) return;
-    final result = await ref
-        .read(adminCategoryMutationProvider.notifier)
-        .save(
-          CategoryPayload(
-            name: name.text,
-            slug: slug.text,
-            description: description.text,
-            sortOrder: int.parse(order.text),
-            isActive: active,
-            imageUrl: image.url,
-          ),
-          id: widget.item?.id,
-        );
-    if (!mounted) return;
+    final result = await editor.save(
+      name: name.text,
+      slug: slug.text,
+      description: description.text,
+      sortOrder: order.text,
+    );
+    if (!mounted || result == null) return;
     adminNotice(context, result, success: 'Category saved.');
     if (result.success) {
       context.go(AppRoutes.adminCategoriesPath);
@@ -99,8 +94,12 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
 
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminCategoryMutationProvider);
+    final busy = ref.watch(
+      adminCategoryMutationProvider.select((state) => state.busy),
+    );
     final image = ref.watch(adminImageProvider(imageKey));
+    final draft = ref.watch(editorProvider);
+    final editor = ref.read(editorProvider.notifier);
     return Form(
       key: form,
       child: AdminPageBody(
@@ -142,10 +141,12 @@ class _CategoryFormState extends ConsumerState<_CategoryForm> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Active'),
-            value: active,
-            onChanged: busy ? null : (value) => setState(() => active = value),
+            value: draft.active,
+            onChanged: busy ? null : editor.setActive,
           ),
           AdminImageField(fieldKey: imageKey, enabled: !busy),
+          if (draft.error != null)
+            InlineNotice(message: draft.error!, error: true),
           Wrap(
             spacing: 12,
             children: [

@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/model/admin_appointment.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/model/appointment_details_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/service/admin_appointment_service.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/dashboard/controller/admin_dashboard_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
@@ -11,6 +14,36 @@ import 'package:assessment_project_fb_international_frontend/features/booking/co
 
 typedef AppointmentFilter = ({String? status, String? date});
 typedef AdminAppointmentKey = ({AdminOwner owner, AppointmentFilter filter});
+final adminAppointmentDetailsStateProvider = Provider.autoDispose
+    .family<AsyncValue<AdminAppointmentDetailsState>, AdminResourceKey>((
+      ref,
+      key,
+    ) {
+      // The directly observed projection owns its timer. Cancel immediately
+      // when the last details view stops listening, including before disposal.
+      Timer? timer;
+      void schedule() {
+        timer?.cancel();
+        timer = Timer(const Duration(seconds: 30), ref.invalidateSelf);
+      }
+
+      schedule();
+      ref.onCancel(() => timer?.cancel());
+      ref.onResume(schedule);
+      ref.onDispose(() => timer?.cancel());
+      final now = DateTime.now();
+      return ref
+          .watch(adminAppointmentProvider(key))
+          .whenData(
+            (item) => AdminAppointmentDetailsState(
+              appointment: item,
+              actions: item.actionsAt(now),
+              awaitingCompletion:
+                  item.status == BookingStatus.confirmed &&
+                  now.isBefore(item.endsAt),
+            ),
+          );
+    });
 final adminAppointmentsProvider = FutureProvider.autoDispose
     .family<List<AdminAppointment>, AdminAppointmentKey>((ref, key) {
       final service = ref.watch(adminAppointmentServiceProvider);

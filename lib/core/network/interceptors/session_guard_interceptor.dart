@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/token_refresh_coordinator.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 
 /// Check ownership again after asynchronous cookie/CSRF work, before dispatch.

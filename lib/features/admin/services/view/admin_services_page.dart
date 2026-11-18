@@ -4,43 +4,25 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_list_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
-class AdminServicesPage extends ConsumerStatefulWidget {
+class AdminServicesPage extends ConsumerWidget {
   const AdminServicesPage({super.key, this.packages = false});
   final bool packages;
   @override
-  ConsumerState<AdminServicesPage> createState() => _AdminServicesPageState();
-}
-
-class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
-  String search = '', category = '', active = '';
-  @override
-  Widget build(BuildContext context) {
-    final path = widget.packages
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(adminServiceFilterProvider(packages).notifier);
+    final path = packages
         ? AppRoutes.adminPackagesPath
         : AppRoutes.adminServicesPath;
     return AdminAsync(
-      value: ref.watch(adminServicesProvider(ref.watch(adminOwnerProvider))),
+      value: ref.watch(adminServiceListProvider(packages)),
       onRetry: () => ref.invalidate(adminServicesProvider),
-      builder: (all) {
-        final items = all
-            .where(
-              (item) =>
-                  item.service.isPackage == widget.packages &&
-                  (category.isEmpty || item.service.categoryId == category) &&
-                  (active.isEmpty || item.isActive == (active == 'active')) &&
-                  '${item.service.name} ${item.service.description}'
-                      .toLowerCase()
-                      .contains(search.toLowerCase()),
-            )
-            .toList();
-        final categories = {
-          for (final item in all)
-            item.service.categoryId: item.service.categoryName,
-        };
+      builder: (data) {
+        final items = data.items;
+        final categories = data.categories;
         return AdminPageBody(
           children: [
             Wrap(
@@ -50,9 +32,7 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                 FilledButton.icon(
                   onPressed: () => context.go('$path/new'),
                   icon: const Icon(Icons.add),
-                  label: Text(
-                    widget.packages ? 'Create package' : 'Add service',
-                  ),
+                  label: Text(packages ? 'Create package' : 'Add service'),
                 ),
                 OutlinedButton(
                   onPressed: () => ref.invalidate(adminServicesProvider),
@@ -65,10 +45,10 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                 labelText: 'Search',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (v) => setState(() => search = v),
+              onChanged: controller.search,
             ),
             DropdownButtonFormField<String>(
-              initialValue: category,
+              initialValue: data.filter.category,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'Category'),
               items: [
@@ -79,10 +59,10 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                 for (final entry in categories.entries)
                   DropdownMenuItem(value: entry.key, child: Text(entry.value)),
               ],
-              onChanged: (v) => setState(() => category = v ?? ''),
+              onChanged: controller.category,
             ),
             DropdownButtonFormField<String>(
-              initialValue: active,
+              initialValue: data.filter.active,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'Status'),
               items: const [
@@ -90,7 +70,7 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                 DropdownMenuItem(value: 'active', child: Text('Active')),
                 DropdownMenuItem(value: 'inactive', child: Text('Inactive')),
               ],
-              onChanged: (v) => setState(() => active = v ?? ''),
+              onChanged: controller.active,
             ),
             if (items.isEmpty) const AdminEmpty(),
             for (final item in items)
@@ -139,7 +119,11 @@ class _AdminServicesPageState extends ConsumerState<AdminServicesPage> {
                                 ),
                                 TextButton(
                                   onPressed:
-                                      ref.watch(adminServiceMutationProvider)
+                                      ref.watch(
+                                        adminServiceMutationProvider.select(
+                                          (state) => state.busy,
+                                        ),
+                                      )
                                       ? null
                                       : () async {
                                           if (!await adminConfirm(

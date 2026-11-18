@@ -3,7 +3,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/model/admin_image_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/model/selected_image.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/media/service/admin_image_service.dart';

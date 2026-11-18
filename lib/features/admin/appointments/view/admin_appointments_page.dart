@@ -4,35 +4,26 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/utils/formatters.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/admin_appointment_controller.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/appointments/controller/appointment_filter_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointment_model.dart';
 import 'package:assessment_project_fb_international_frontend/features/workshop/utils/workshop_time.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';
 
-class AdminAppointmentsPage extends ConsumerStatefulWidget {
+class AdminAppointmentsPage extends ConsumerWidget {
   const AdminAppointmentsPage({super.key, this.initialStatus});
   final String? initialStatus;
   @override
-  ConsumerState<AdminAppointmentsPage> createState() =>
-      _AdminAppointmentsPageState();
-}
-
-class _AdminAppointmentsPageState extends ConsumerState<AdminAppointmentsPage> {
-  late String status =
-      BookingStatus.values.any((s) => s.name == widget.initialStatus)
-      ? widget.initialStatus!
-      : '';
-  DateTime? date;
-  @override
-  Widget build(BuildContext context) {
-    final filter = (
-      status: status.isEmpty ? null : status,
-      date: date?.toIso8601String().substring(0, 10),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final filter = ref.watch(appointmentFilterProvider(initialStatus));
+    final controller = ref.read(
+      appointmentFilterProvider(initialStatus).notifier,
     );
+    final date = filter.date;
     final provider = adminAppointmentsProvider((
       owner: ref.watch(adminOwnerProvider),
-      filter: filter,
+      filter: filter.query,
     ));
     return Column(
       children: [
@@ -41,7 +32,7 @@ class _AdminAppointmentsPageState extends ConsumerState<AdminAppointmentsPage> {
           child: Column(
             children: [
               DropdownButtonFormField<String>(
-                initialValue: status,
+                initialValue: filter.status,
                 isExpanded: true,
                 decoration: const InputDecoration(labelText: 'Status'),
                 items: [
@@ -52,7 +43,7 @@ class _AdminAppointmentsPageState extends ConsumerState<AdminAppointmentsPage> {
                   for (final s in BookingStatus.values)
                     DropdownMenuItem(value: s.name, child: Text(s.name)),
                 ],
-                onChanged: (v) => setState(() => status = v ?? ''),
+                onChanged: controller.selectStatus,
               ),
               const SizedBox(height: 12),
               Wrap(
@@ -64,23 +55,23 @@ class _AdminAppointmentsPageState extends ConsumerState<AdminAppointmentsPage> {
                     label: Text(
                       date == null
                           ? 'Filter date (Asia/Dhaka)'
-                          : Formatters.date(date!),
+                          : Formatters.date(date),
                     ),
                     onPressed: () async {
                       final picked = await showDatePicker(
                         context: context,
-                        initialDate: date ?? WorkshopTime.local(DateTime.now()),
+                        initialDate: controller.pickerInitialDate,
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2100),
                       );
-                      if (picked != null && mounted) {
-                        setState(() => date = picked);
+                      if (picked != null && context.mounted) {
+                        controller.selectDate(picked);
                       }
                     },
                   ),
                   if (date != null)
                     TextButton(
-                      onPressed: () => setState(() => date = null),
+                      onPressed: () => controller.selectDate(null),
                       child: const Text('Clear date'),
                     ),
                   IconButton(

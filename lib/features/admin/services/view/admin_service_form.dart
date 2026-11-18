@@ -9,8 +9,7 @@ import 'package:assessment_project_fb_international_frontend/features/admin/medi
 import 'package:assessment_project_fb_international_frontend/features/admin/media/view/admin_image_field.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/model/admin_service.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_payload.dart';
-import 'package:assessment_project_fb_international_frontend/features/admin/services/model/service_validation.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/service_form_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_validation.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
@@ -66,16 +65,14 @@ class _Dependencies extends ConsumerWidget {
           )
         : package
         ? AdminAsync(
-            value: ref.watch(
-              adminServicesProvider(ref.watch(adminOwnerProvider)),
-            ),
+            value: ref.watch(adminIndividualServicesProvider),
             onRetry: () => ref.invalidate(adminServicesProvider),
             builder: (services) => _ServiceForm(
               key: ValueKey(item?.id ?? 'new-package'),
               item: item,
               package: true,
               categories: categories,
-              individuals: services.where((s) => !s.service.isPackage).toList(),
+              individuals: services,
             ),
           )
         : _ServiceForm(
@@ -125,34 +122,19 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
   late final order = TextEditingController(
     text: '${widget.item?.sortOrder ?? 0}',
   );
-  late final inclusions = [
-    for (final value in widget.item?.service.inclusions ?? <String>[])
-      TextEditingController(text: value),
-  ];
-  late final quantities = {
-    for (final item in widget.item?.items ?? <PackageItem>[])
-      item.serviceId: TextEditingController(text: '${item.quantity}'),
-  };
-  late String category =
-      widget.item?.service.categoryId ?? widget.categories.first.id;
-  late bool active = widget.item?.isActive ?? true,
-      featured = widget.item?.isFeatured ?? false;
-  String? error;
+  late final editorProvider = serviceFormProvider((
+    image: imageKey,
+    item: widget.item,
+    package: widget.package,
+    firstCategoryId: widget.categories.first.id,
+    individuals: widget.individuals,
+  ));
   String get path => widget.package
       ? AppRoutes.adminPackagesPath
       : AppRoutes.adminServicesPath;
   @override
   void dispose() {
-    for (final c in [
-      name,
-      slug,
-      description,
-      price,
-      duration,
-      order,
-      ...inclusions,
-      ...quantities.values,
-    ]) {
+    for (final c in [name, slug, description, price, duration, order]) {
       c.dispose();
     }
     super.dispose();
@@ -160,26 +142,8 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
 
   Future<void> save() async {
     if (!form.currentState!.validate()) return;
-    final values = inclusions.map((c) => c.text.trim()).toList();
-    final items = [
-      for (final e in quantities.entries)
-        PackageItem(
-          serviceId: e.key,
-          quantity: int.tryParse(e.value.text) ?? 0,
-        ),
-    ];
-    final validation =
-        ServiceValidation.inclusions(values) ??
-        (widget.package
-            ? ServiceValidation.packageItems(
-                items,
-                widget.individuals.map((s) => s.id).toSet(),
-              )
-            : null);
-    setState(() => error = validation);
-    if (validation != null) return;
-    if (widget.item != null &&
-        active != widget.item!.isActive &&
+    final editor = ref.read(editorProvider.notifier);
+    if (editor.requiresStatusConfirmation &&
         !await adminConfirm(
           context,
           'Change item status?',
@@ -188,29 +152,15 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
       return;
     }
     if (!mounted) return;
-    final image = ref.read(adminImageProvider(imageKey));
-    if (image.busy) return;
-    final result = await ref
-        .read(adminServiceMutationProvider.notifier)
-        .save(
-          ServicePayload(
-            name: name.text,
-            slug: slug.text,
-            description: description.text,
-            categoryId: category,
-            type: widget.package ? 'PACKAGE' : 'INDIVIDUAL',
-            price: price.text,
-            durationMinutes: int.parse(duration.text),
-            sortOrder: int.parse(order.text),
-            isActive: active,
-            isFeatured: featured,
-            imageUrl: image.url,
-            inclusions: values,
-            packageItems: items,
-          ),
-          id: widget.item?.id,
-        );
-    if (!mounted) return;
+    final result = await editor.save(
+      name: name.text,
+      slug: slug.text,
+      description: description.text,
+      price: price.text,
+      duration: duration.text,
+      sortOrder: order.text,
+    );
+    if (!mounted || result == null) return;
     adminNotice(
       context,
       result,
@@ -229,7 +179,9 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
     TextInputType? keyboard,
   }) => TextFormField(
     controller: c,
-    enabled: !ref.watch(adminServiceMutationProvider),
+    enabled: !ref.watch(
+      adminServiceMutationProvider.select((state) => state.busy),
+    ),
     maxLines: lines,
     keyboardType: keyboard,
     decoration: InputDecoration(labelText: label),
@@ -237,11 +189,13 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
   );
   @override
   Widget build(BuildContext context) {
-    final busy = ref.watch(adminServiceMutationProvider);
+    final busy = ref.watch(
+      adminServiceMutationProvider.select((state) => state.busy),
+    );
     final image = ref.watch(adminImageProvider(imageKey));
-    final remaining = widget.individuals
-        .where((s) => !quantities.containsKey(s.id))
-        .toList();
+    final draft = ref.watch(editorProvider);
+    final editor = ref.read(editorProvider.notifier);
+    final remaining = editor.remaining;
     return Form(
       key: form,
       child: AdminPageBody(
@@ -260,7 +214,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
             lines: 3,
           ),
           DropdownButtonFormField<String>(
-            initialValue: category,
+            initialValue: draft.categoryId,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Category'),
             items: [
@@ -273,7 +227,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
                   ),
                 ),
             ],
-            onChanged: busy ? null : (v) => setState(() => category = v!),
+            onChanged: busy ? null : editor.selectCategory,
             validator: (v) => v == null ? 'Choose a category.' : null,
           ),
           field(
@@ -295,15 +249,22 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
             keyboard: const TextInputType.numberWithOptions(signed: true),
           ),
           Text('Inclusions', style: Theme.of(context).textTheme.titleMedium),
-          for (var i = 0; i < inclusions.length; i++)
+          for (final entry in draft.inclusions.entries)
             Row(
+              key: ValueKey(('inclusion', entry.key)),
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: field(
-                    inclusions[i],
-                    'Inclusion ${i + 1}',
-                    (v) =>
+                  child: TextFormField(
+                    initialValue: entry.value,
+                    enabled: !busy,
+                    onChanged: (value) =>
+                        editor.updateInclusion(entry.key, value),
+                    decoration: InputDecoration(
+                      labelText:
+                          'Inclusion ${draft.inclusions.keys.toList().indexOf(entry.key) + 1}',
+                    ),
+                    validator: (v) =>
                         v == null || v.trim().isEmpty || v.trim().length > 1000
                         ? 'Enter 1–1,000 characters.'
                         : null,
@@ -313,9 +274,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
                   tooltip: 'Remove inclusion',
                   onPressed: busy
                       ? null
-                      : () => setState(() {
-                          inclusions.removeAt(i).dispose();
-                        }),
+                      : () => editor.removeInclusion(entry.key),
                   icon: const Icon(Icons.remove_circle_outline),
                 ),
               ],
@@ -323,10 +282,9 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
           Align(
             alignment: Alignment.centerLeft,
             child: OutlinedButton.icon(
-              onPressed: busy || inclusions.length >= 100
+              onPressed: busy || draft.inclusions.length >= 100
                   ? null
-                  : () =>
-                        setState(() => inclusions.add(TextEditingController())),
+                  : editor.addInclusion,
               icon: const Icon(Icons.add),
               label: const Text('Add inclusion'),
             ),
@@ -341,7 +299,7 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
             ),
             if (remaining.isNotEmpty)
               DropdownButtonFormField<String>(
-                key: ValueKey(quantities.keys.join(',')),
+                key: ValueKey(draft.quantities.keys.join(',')),
                 isExpanded: true,
                 decoration: const InputDecoration(
                   labelText: 'Add individual service',
@@ -356,48 +314,38 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
                       ),
                     ),
                 ],
-                onChanged: busy
-                    ? null
-                    : (id) {
-                        if (id != null) {
-                          setState(
-                            () => quantities[id] = TextEditingController(
-                              text: '1',
-                            ),
-                          );
-                        }
-                      },
+                onChanged: busy ? null : editor.addItem,
               ),
-            for (final entry in quantities.entries)
+            for (final entry in draft.quantities.entries)
               Column(
+                key: ValueKey(('quantity', entry.key)),
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.individuals
-                            .where((s) => s.id == entry.key)
-                            .firstOrNull
-                            ?.service
-                            .name ??
-                        'Unavailable component',
+                    editor.componentNames[entry.key] ?? 'Unavailable component',
                   ),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: field(
-                          entry.value,
-                          'Quantity',
-                          (v) => AdminValidation.integer(v, min: 1, max: 1000),
-                          keyboard: TextInputType.number,
+                        child: TextFormField(
+                          initialValue: entry.value,
+                          enabled: !busy,
+                          onChanged: (value) =>
+                              editor.updateQuantity(entry.key, value),
+                          decoration: const InputDecoration(
+                            labelText: 'Quantity',
+                          ),
+                          validator: (v) =>
+                              AdminValidation.integer(v, min: 1, max: 1000),
+                          keyboardType: TextInputType.number,
                         ),
                       ),
                       IconButton(
                         tooltip: 'Remove package item',
                         onPressed: busy
                             ? null
-                            : () => setState(() {
-                                quantities.remove(entry.key)?.dispose();
-                              }),
+                            : () => editor.removeItem(entry.key),
                         icon: const Icon(Icons.remove_circle_outline),
                       ),
                     ],
@@ -408,17 +356,18 @@ class _ServiceFormState extends ConsumerState<_ServiceForm> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Featured'),
-            value: featured,
-            onChanged: busy ? null : (v) => setState(() => featured = v),
+            value: draft.featured,
+            onChanged: busy ? null : editor.setFeatured,
           ),
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Active'),
-            value: active,
-            onChanged: busy ? null : (v) => setState(() => active = v),
+            value: draft.active,
+            onChanged: busy ? null : editor.setActive,
           ),
           AdminImageField(fieldKey: imageKey, enabled: !busy),
-          if (error != null) InlineNotice(message: error!, error: true),
+          if (draft.error != null)
+            InlineNotice(message: draft.error!, error: true),
           Wrap(
             spacing: 12,
             children: [

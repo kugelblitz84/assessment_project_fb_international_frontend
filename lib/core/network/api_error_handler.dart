@@ -8,9 +8,12 @@ import 'package:assessment_project_fb_international_frontend/core/utils/input_va
 
 /// The result of a feature service operation, including no-content successes.
 class ApiResponse<T> {
-  const ApiResponse.success(this.data) : success = true, errorCode = null;
+  const ApiResponse.success(this.data)
+    : success = true,
+      errorCode = null,
+      statusCode = null;
 
-  const ApiResponse.failure(String code)
+  const ApiResponse.failure(String code, {this.statusCode})
     : success = false,
       data = null,
       errorCode = code;
@@ -18,6 +21,12 @@ class ApiResponse<T> {
   final T? data;
   final bool success;
   final String? errorCode;
+  final int? statusCode;
+
+  bool get isUnauthorized =>
+      statusCode == 401 ||
+      errorCode == 'UNAUTHORIZED' ||
+      errorCode == 'SESSION_EXPIRED';
 }
 
 /// Wraps feature requests without changing authentication or retry behavior.
@@ -25,24 +34,20 @@ abstract final class ApiErrorHandler {
   static Future<ApiResponse<T>> run<T>(Future<T> Function() action) async {
     try {
       return ApiResponse<T>.success(await action());
-    } on ApiFailure catch (error) {
-      return ApiResponse<T>.failure(error.code);
-    } on InputValidationException {
-      return ApiResponse<T>.failure('VALIDATION_ERROR');
-    } on DioException catch (error) {
-      return ApiResponse<T>.failure(_codeForDio(error));
-    } on SessionException catch (error) {
-      return ApiResponse<T>.failure(_codeForSession(error));
-    } on FormatException {
-      return ApiResponse<T>.failure('INVALID_RESPONSE');
     } catch (error, stack) {
+      final code = codeFor(error);
       // Never log exception text: Dio errors and programmer errors may hold input.
-      developer.log(
-        'Unexpected operation failure: ${error.runtimeType}',
-        name: 'autocare.api',
-        stackTrace: stack,
+      if (code == 'UNEXPECTED_ERROR') {
+        developer.log(
+          'Unexpected operation failure: ${error.runtimeType}',
+          name: 'autocare.api',
+          stackTrace: stack,
+        );
+      }
+      return ApiResponse<T>.failure(
+        code,
+        statusCode: error is DioException ? error.response?.statusCode : null,
       );
-      return ApiResponse<T>.failure('UNEXPECTED_ERROR');
     }
   }
 
@@ -58,6 +63,7 @@ abstract final class ApiErrorHandler {
   static String _codeForDio(DioException error) {
     // Interceptor rejections and JSON decoding failures can be wrapped by Dio.
     final cause = error.error;
+    if (cause is ApiFailure) return cause.code;
     if (cause is SessionException) return _codeForSession(cause);
     if (cause is FormatException) {
       return 'INVALID_RESPONSE';

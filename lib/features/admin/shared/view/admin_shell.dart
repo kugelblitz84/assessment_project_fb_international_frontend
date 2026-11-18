@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/app/widgets/auto_care_brand.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/current_user_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/logout_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/current_user_provider.dart';
+import 'package:assessment_project_fb_international_frontend/features/auth/controller/logout_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/view/admin_widgets.dart';
 import 'package:assessment_project_fb_international_frontend/routes/app_routes.dart';

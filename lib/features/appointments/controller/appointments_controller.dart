@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_identity_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/provider/session_identity_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/model/appointments_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/appointments/service/appointment_service.dart';
@@ -15,6 +15,32 @@ final appointmentDetailsProvider = AsyncNotifierProvider.autoDispose
     .family<AppointmentDetailsController, AppointmentDetailsState, String>(
       AppointmentDetailsController.new,
     );
+
+/// Presentation projections hide cached private data while a new session loads.
+/// Views render the result without repeating session ownership rules.
+final ownedAppointmentsProvider = Provider<AsyncValue<AppointmentsState>>((
+  ref,
+) {
+  final owner = ref.watch(sessionIdentityProvider).userId;
+  final value = ref.watch(appointmentsControllerProvider);
+  if (owner == null ||
+      value.isLoading ||
+      (value.hasValue && value.requireValue.ownerId != owner)) {
+    return const AsyncLoading();
+  }
+  return value;
+});
+final ownedAppointmentDetailsProvider = Provider.autoDispose
+    .family<AsyncValue<AppointmentDetailsState>, String>((ref, id) {
+      final owner = ref.watch(sessionIdentityProvider).userId;
+      final value = ref.watch(appointmentDetailsProvider(id));
+      if (owner == null ||
+          value.isLoading ||
+          (value.hasValue && value.requireValue.ownerId != owner)) {
+        return const AsyncLoading();
+      }
+      return value;
+    });
 
 class AppointmentsController extends AsyncNotifier<AppointmentsState> {
   int _generation = 0;

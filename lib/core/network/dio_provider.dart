@@ -11,8 +11,8 @@ import 'package:assessment_project_fb_international_frontend/core/network/interc
 import 'package:assessment_project_fb_international_frontend/core/network/interceptors/csrf_interceptor.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/interceptors/session_guard_interceptor.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/transport_timeouts.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/token_refresh_coordinator.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/token_storage_provider.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/token_refresh_coordinator.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/token_storage_provider.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
 

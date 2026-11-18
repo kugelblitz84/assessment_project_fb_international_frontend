@@ -7,6 +7,7 @@ import 'package:assessment_project_fb_international_frontend/features/admin/cate
 import 'package:assessment_project_fb_international_frontend/features/admin/dashboard/controller/admin_dashboard_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/services/controller/admin_service_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/admin/shared/controller/admin_access.dart';
+import 'package:assessment_project_fb_international_frontend/features/admin/shared/model/admin_mutation_state.dart';
 import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
 import 'package:assessment_project_fb_international_frontend/features/catalog/controller/service_details_controller.dart';
 
@@ -21,15 +22,15 @@ final adminCategoryProvider = FutureProvider.autoDispose
       return loadAdmin(ref, key.owner, () => service.get(key.id));
     }, retry: (_, _) => null);
 final adminCategoryMutationProvider =
-    NotifierProvider.autoDispose<AdminCategoryMutation, bool>(
+    NotifierProvider.autoDispose<AdminCategoryMutation, AdminMutationState>(
       AdminCategoryMutation.new,
     );
 
-class AdminCategoryMutation extends Notifier<bool> {
+class AdminCategoryMutation extends Notifier<AdminMutationState> {
   @override
-  bool build() {
+  AdminMutationState build() {
     ref.watch(adminOwnerProvider);
-    return false;
+    return const AdminMutationState();
   }
 
   Future<ApiResponse<void>> save(CategoryPayload payload, {String? id}) async {
@@ -46,15 +47,15 @@ class AdminCategoryMutation extends Notifier<bool> {
       _run(() => ref.read(adminCategoryServiceProvider).setActive(id, active));
   Future<ApiResponse<void>> _run(Future<void> Function() action) async {
     final owner = ref.read(adminOwnerProvider);
-    if (state || !owner.authorized) {
+    if (state.busy || !owner.authorized) {
       return const ApiResponse.failure('FORBIDDEN');
     }
-    state = true;
+    state = const AdminMutationState(busy: true);
     final result = await ApiErrorHandler.run(action);
     if (!ref.mounted || owner != ref.read(adminOwnerProvider)) {
       return const ApiResponse.failure('SESSION_EXPIRED');
     }
-    state = false;
+    state = AdminMutationState(errorCode: result.errorCode);
     if (result.success) {
       ref.invalidate(adminDashboardProvider);
       ref.invalidate(catalogControllerProvider);

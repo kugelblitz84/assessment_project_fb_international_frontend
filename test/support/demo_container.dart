@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_auth.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_overrides.dart';
 import 'package:assessment_project_fb_international_frontend/demo/demo_workshop.dart';

@@ -78,7 +78,11 @@ class AdminCategoriesPage extends ConsumerWidget {
                             ),
                             TextButton(
                               onPressed:
-                                  ref.watch(adminCategoryMutationProvider)
+                                  ref.watch(
+                                    adminCategoryMutationProvider.select(
+                                      (state) => state.busy,
+                                    ),
+                                  )
                                   ? null
                                   : () async {
                                       if (!await adminConfirm(

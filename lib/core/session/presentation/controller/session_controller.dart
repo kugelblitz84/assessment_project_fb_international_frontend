@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_state.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/session_exception.dart';

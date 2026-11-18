@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:assessment_project_fb_international_frontend/core/config/api_config.dart';
 import 'package:assessment_project_fb_international_frontend/core/config/demo_mode.dart';
 import 'package:assessment_project_fb_international_frontend/core/network/dio_provider.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_providers.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/data/session_providers.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/data/user_model.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/auth_session.dart';
 import 'package:assessment_project_fb_international_frontend/core/session/domain/user_entity.dart';

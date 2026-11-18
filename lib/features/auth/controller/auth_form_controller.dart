@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/network/api_error_handler.dart';
-import 'package:assessment_project_fb_international_frontend/core/session/application/session_controller.dart';
+import 'package:assessment_project_fb_international_frontend/core/session/presentation/controller/session_controller.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/api_error_messages.dart';
 import 'package:assessment_project_fb_international_frontend/core/utils/validators.dart';
 import 'package:assessment_project_fb_international_frontend/features/auth/model/auth_form_state.dart';
@@ -33,7 +33,7 @@ class AuthFormController extends Notifier<AuthFormState> {
       return;
     }
     state = const AuthFormState(status: AuthFormStatus.submitting);
-    try {
+    final result = await ApiErrorHandler.run<void>(() async {
       final session = ref.read(sessionProvider.notifier);
       if (mode == AuthFormMode.login) {
         await session.login(email: email.trim(), password: password);
@@ -44,16 +44,13 @@ class AuthFormController extends Notifier<AuthFormState> {
           password: password,
         );
       }
-      if (ref.mounted) {
-        state = const AuthFormState(status: AuthFormStatus.succeeded);
-      }
-    } catch (error) {
-      if (ref.mounted) {
-        state = AuthFormState(
-          status: AuthFormStatus.failed,
-          error: ApiErrorMessages.messageFor(ApiErrorHandler.codeFor(error)),
-        );
-      }
-    }
+    });
+    if (!ref.mounted) return;
+    state = AuthFormState(
+      status: result.success ? AuthFormStatus.succeeded : AuthFormStatus.failed,
+      error: result.success
+          ? null
+          : ApiErrorMessages.messageFor(result.errorCode),
+    );
   }
 }
