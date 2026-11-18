@@ -15,6 +15,12 @@
 
 ## Technical details
 
+### Explore on mobile
+
+Android and iOS save the public catalog in SQLite after a successful load. For six hours, opening Explore uses the saved catalog without requesting it again. After that, Explore shows saved services while checking for updates when the page opens, becomes visible again, or the app resumes. If a refresh fails, search, category filters, featured services and details still work with the saved catalog. Pull to refresh at any time to fetch current prices and offers. Successful admin edits to services, categories and offers expire the local catalog.
+
+Service photos are cached on disk as they are viewed. Offline browsing can show previously loaded photos while they remain in the device cache.
+
 ### Booking
 
 The workshop uses Asia/Dhaka and a backend-defined rolling booking horizon. No production slots are fabricated locally. The controller prevents double submissions, refreshes after conflicts and asks users to check booking history after ambiguous failures. The backend determines owner, price, duration, bay and status and enforces capacity at the database level. On successful creation the shared appointment provider is invalidated. A booking is initially pending; payment and appointment status are separate.

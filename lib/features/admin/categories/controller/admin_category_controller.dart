@@ -58,12 +58,12 @@ class AdminCategoryMutation extends Notifier<AdminMutationState> {
     state = AdminMutationState(errorCode: result.errorCode);
     if (result.success) {
       ref.invalidate(adminDashboardProvider);
-      ref.invalidate(catalogControllerProvider);
       ref.invalidate(serviceDetailsRequestProvider);
       ref.invalidate(adminServicesProvider);
       ref.invalidate(adminServiceProvider);
       ref.invalidate(adminCategoriesProvider);
       ref.invalidate(adminCategoryProvider);
+      await invalidatePublicCatalog(ref);
     }
     return result;
   }

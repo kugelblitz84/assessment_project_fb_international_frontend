@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
+import 'package:assessment_project_fb_international_frontend/core/widgets/app_resume_listener.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/page_container.dart';
 import 'package:assessment_project_fb_international_frontend/features/catalog/controller/catalog_controller.dart';
@@ -35,6 +36,22 @@ class _HomePageState extends ConsumerState<HomePage> {
   late final TextEditingController _search;
   final _searchFocus = FocusNode();
   final _catalogueKey = GlobalKey();
+  bool _visible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible && !_visible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _visible) {
+          ref.read(catalogControllerProvider.notifier).refreshIfStale();
+        }
+      });
+    }
+    _visible = visible;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -94,7 +111,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         );
       }
     });
-    return RefreshIndicator(
+    final page = RefreshIndicator(
       onRefresh: catalogController.refresh,
       child: PageSliverScrollView(
         key: const PageStorageKey('home-scroll'),
@@ -158,6 +175,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
         ],
       ),
+    );
+    return AppResumeListener(
+      onResume: catalogController.refreshIfStale,
+      child: page,
     );
   }
 }

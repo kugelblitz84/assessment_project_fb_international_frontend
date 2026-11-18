@@ -28,7 +28,7 @@ class ServiceCatalogSection extends ConsumerWidget {
         ErrorState(onRetry: () => ref.invalidate(catalogControllerProvider)),
       ),
       data: (data) {
-        if (data.errorCode != null && data.services.isEmpty) {
+        if (data.errorCode != null && data.updatedAt == null) {
           return box(
             ErrorState(
               code: data.errorCode,

@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
+import 'package:assessment_project_fb_international_frontend/core/config/mobile_platform.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_colors.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_depth.dart';
 import 'package:assessment_project_fb_international_frontend/core/theme/app_spacing.dart';
@@ -81,8 +83,10 @@ class ServiceImage extends StatelessWidget {
           aspectRatio: 16 / 10,
           child: url == null
               ? fallback
-              : Image.network(
-                  url!,
+              : Image(
+                  image: isNativeMobile
+                      ? CachedNetworkImageProvider(url!)
+                      : NetworkImage(url!),
                   fit: BoxFit.cover,
                   loadingBuilder: (context, child, progress) =>
                       progress == null ? child : fallback,

@@ -60,12 +60,12 @@ class AdminOfferMutation extends Notifier<AdminMutationState> {
     state = AdminMutationState(errorCode: result.errorCode);
     if (result.success) {
       ref.invalidate(adminDashboardProvider);
-      ref.invalidate(catalogControllerProvider);
       ref.invalidate(serviceDetailsRequestProvider);
       ref.invalidate(adminServicesProvider);
       ref.invalidate(adminServiceProvider);
       ref.invalidate(adminOffersProvider);
       ref.invalidate(adminOfferProvider);
+      await invalidatePublicCatalog(ref);
     }
     return result;
   }

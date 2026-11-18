@@ -32,6 +32,23 @@ class ServiceModel {
   final bool isFeatured;
   bool get isPackage => type == 'PACKAGE';
 
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'categoryId': categoryId,
+    'categoryName': categoryName,
+    'price': price,
+    'currency': currency,
+    'durationMinutes': durationMinutes,
+    'imageUrl': imageUrl,
+    'inclusions': inclusions,
+    'available': available,
+    'type': type,
+    'originalPrice': originalPrice,
+    'isFeatured': isFeatured,
+  };
+
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     if ([
           'id',

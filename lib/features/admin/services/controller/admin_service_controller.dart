@@ -89,10 +89,10 @@ class AdminServiceMutation extends Notifier<AdminMutationState> {
     state = AdminMutationState(errorCode: result.errorCode);
     if (result.success) {
       ref.invalidate(adminDashboardProvider);
-      ref.invalidate(catalogControllerProvider);
       ref.invalidate(serviceDetailsRequestProvider);
       ref.invalidate(adminServicesProvider);
       ref.invalidate(adminServiceProvider);
+      await invalidatePublicCatalog(ref);
     }
     return result;
   }
