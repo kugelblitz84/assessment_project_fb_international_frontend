@@ -6,6 +6,7 @@ import 'package:assessment_project_fb_international_frontend/core/utils/formatte
 import 'package:assessment_project_fb_international_frontend/core/widgets/app_surface.dart';
 import 'package:assessment_project_fb_international_frontend/core/widgets/async_state_view.dart';
 import 'package:assessment_project_fb_international_frontend/features/booking/model/booking_state.dart';
+import 'package:assessment_project_fb_international_frontend/features/workshop/model/availability_model.dart';
 
 class BookingDateSelector extends StatelessWidget {
   const BookingDateSelector({
@@ -21,6 +22,19 @@ class BookingDateSelector extends StatelessWidget {
   final ValueChanged<String> onSlotSelected;
   @override
   Widget build(BuildContext context) {
+    // Bay-specific IDs stay internal; customers choose a time window once.
+    final windows = <(DateTime, DateTime?), TimeSlotModel>{};
+    for (final slot in draft.availability?.slots ?? const <TimeSlotModel>[]) {
+      final key = (slot.startsAt, slot.endsAt);
+      final existing = windows[key];
+      if (existing == null ||
+          (slot.available &&
+              (!existing.available || slot.id == draft.slotId))) {
+        windows[key] = slot;
+      }
+    }
+    final slots = windows.values.toList()
+      ..sort((a, b) => a.startsAt.compareTo(b.startsAt));
     return AppSurface(
       child: Padding(
         padding: AppSize.inset(20),
@@ -91,7 +105,7 @@ class BookingDateSelector extends StatelessWidget {
                 (label: 'Afternoon', start: 12, end: 17),
                 (label: 'Evening', start: 17, end: 24),
               ])
-                if (draft.availability!.slots.any(
+                if (slots.any(
                   (s) =>
                       s.workshopTime.hour >= period.start &&
                       s.workshopTime.hour < period.end,
@@ -105,7 +119,7 @@ class BookingDateSelector extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final slot in draft.availability!.slots.where(
+                      for (final slot in slots.where(
                         (s) =>
                             s.workshopTime.hour >= period.start &&
                             s.workshopTime.hour < period.end,
