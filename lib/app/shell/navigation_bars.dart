@@ -68,7 +68,7 @@ class DesktopNavigationBar extends StatelessWidget
         MediaQuery.textScalerOf(context).scale(16) > 22 ||
         MediaQuery.sizeOf(context).width < 1100;
     final nav = Container(
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.surfaceRecessed,
         borderRadius: BorderRadius.circular(AppSize.radius(13)),
@@ -81,6 +81,11 @@ class DesktopNavigationBar extends StatelessWidget
           for (var i = 0; i < appDestinations.length; i++)
             TextButton.icon(
               style: TextButton.styleFrom(
+                // Fit the 56px header space with equal insets on every side.
+                minimumSize: const Size(48, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.standard,
                 backgroundColor: selectedIndex == i ? AppColors.surface : null,
                 elevation: selectedIndex == i ? 2 : 0,
                 shadowColor: AppColors.shadow.withValues(alpha: .5),
@@ -106,7 +111,7 @@ class DesktopNavigationBar extends StatelessWidget
           ),
           padding: EdgeInsets.symmetric(
             horizontal: AppSize.horizontal(24),
-            vertical: AppSize.vertical(12),
+            vertical: 12,
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1144),
